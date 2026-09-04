@@ -46,3 +46,12 @@ create table Enrolments(
 	foreign key(categoryId) references Categories(categoryId),
 	enrolmentStatus varchar(10) not null
 );
+
+
+create table Results(
+	resultId int identity(1, 1) primary key,
+	enrolmentId int unique,
+	foreign key(enrolmentId) references Enrolments(enrolmentId),
+	finishTime varchar(100),
+	finishPosition int
+);

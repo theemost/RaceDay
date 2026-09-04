@@ -6,10 +6,10 @@ create table Users(
 	userId int identity(1000, 1) primary key,
 	firstName varchar(50) not null,
 	lastName varchar(50) not null,
-	emailAddress varchar(100) not null,
-	password varchar(100),
-	username varchar(50),
-	role varchar(50)
+	emailAddress varchar(100) not null unique,
+	password varchar(100) not null,
+	username varchar(50) not null unique,
+	role varchar(50) not null
 );
 
 create table EventTypes(
@@ -21,25 +21,25 @@ create table Events(
 	eventId int identity(2000, 1) primary key,
 	eventName varchar(50) not null,
 	description varchar(100) not null,
-	eventDate varchar(11) not null,
+	eventDate date not null,
 	location varchar(100) not null,
-	organiserId int,
+	organiserId int not null,
 	foreign key(organiserId) references Users(userId),
-	eventTypeId int,
+	eventTypeId int not null,
 	foreign key(eventTypeId) references EventTypes(eventTypeId)
 );
 
 create table Categories(
 	categoryId int identity(6000, 1) primary key,
 	categoryName varchar(100) not null,
-	eventId int,
+	eventId int not null,
 	foreign key(eventId) references Events(eventId)
 );
 
 create table Enrolments(
 	enrolmentId int identity(4000, 1) primary key,
-	participentId int,
-	foreign key(participentId) references Users(userId),
+	participantId int not null,
+	foreign key(participantId) references Users(userId),
 	eventId int,
 	foreign key(eventId) references Events(eventId),
 	categoryId int,
@@ -47,11 +47,10 @@ create table Enrolments(
 	enrolmentStatus varchar(10) not null
 );
 
-
 create table Results(
 	resultId int identity(1, 1) primary key,
 	enrolmentId int unique,
 	foreign key(enrolmentId) references Enrolments(enrolmentId),
-	finishTime varchar(100),
-	finishPosition int
+	finishTime time not null,
+	finishPosition int not null
 );

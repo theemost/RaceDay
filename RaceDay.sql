@@ -12,3 +12,7 @@ create table Users(
 	role varchar(50)
 );
 
+create table EventTypes(
+	eventTypeId int identity(5000, 1) primary key,
+	eventTypeName varchar(50) not null
+);

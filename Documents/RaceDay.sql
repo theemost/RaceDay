@@ -55,4 +55,3 @@ create table Results(
 	finishTime varchar(100),
 	finishPosition int
 );
-

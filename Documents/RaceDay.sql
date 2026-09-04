@@ -54,3 +54,19 @@ create table Results(
 	finishTime time not null,
 	finishPosition int not null
 );
+
+insert into Users(firstName, lastName, username, emailAddress, password, role)
+values	('Esethu', 'Busakwe', 'esethu@gmail.com', 'HASHED_PASSWORD1', 'esethub', 'Organiser'), 
+		('John','Mokoena','john@gmail.com','HASHED_PASSWORD2','johnm','Organiser'),
+		('Walter','White','walterw@gmail.com','HASHED_PASSWORD3','wwhite','Participant'),
+		('Marty','Byrd','martybyrd@gmail.com','HASHED_PASSWORD4','byrdm','Participant');
+
+insert into EventTypes(eventTypeName)
+values	('Run'), ('Swimming'), ('Cycling'), ('Walk');
+
+insert into Events(eventName, description, eventDate, location, organiserId, eventTypeId)
+values	('Run Jozi', '100km marathon', '2026-10-09', 'Ghandi Square', 1000, 5000),
+		('Swim Meet', '10Km swim', '2026-9-10', 'Richards Bay', 1001, 5001),
+		('Tour de Jozi', '150km race', '2026-10-20', 'Braamfontein', 1000, 5002)
+
+

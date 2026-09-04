@@ -23,22 +23,22 @@ create table Events(
 	description varchar(100) not null,
 	eventDate date not null,
 	location varchar(100) not null,
-	organiserId int,
+	organiserId int not null,
 	foreign key(organiserId) references Users(userId),
-	eventTypeId int,
+	eventTypeId int not null,
 	foreign key(eventTypeId) references EventTypes(eventTypeId)
 );
 
 create table Categories(
 	categoryId int identity(6000, 1) primary key,
 	categoryName varchar(100) not null,
-	eventId int,
+	eventId int not null,
 	foreign key(eventId) references Events(eventId)
 );
 
 create table Enrolments(
 	enrolmentId int identity(4000, 1) primary key,
-	participentId int,
+	participantId int not null,
 	foreign key(participantId) references Users(userId),
 	eventId int,
 	foreign key(eventId) references Events(eventId),
@@ -52,8 +52,8 @@ create table Results(
 	resultId int identity(1, 1) primary key,
 	enrolmentId int unique,
 	foreign key(enrolmentId) references Enrolments(enrolmentId),
-	finishTime varchar(100),
-	finishPosition int
+	finishTime time not null,
+	finishPosition int not null
 );
 
 

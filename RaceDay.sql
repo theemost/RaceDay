@@ -28,3 +28,10 @@ create table Events(
 	eventTypeId int,
 	foreign key(eventTypeId) references EventTypes(eventTypeId)
 );
+
+create table Categories(
+	categoryId int identity(6000, 1) primary key,
+	categoryName varchar(100) not null,
+	eventId int,
+	foreign key(eventId) references Events(eventId)
+);

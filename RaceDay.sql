@@ -6,10 +6,10 @@ create table Users(
 	userId int identity(1000, 1) primary key,
 	firstName varchar(50) not null,
 	lastName varchar(50) not null,
-	emailAddress varchar(100) not null,
-	password varchar(100),
-	username varchar(50),
-	role varchar(50)
+	emailAddress varchar(100) not null unique,
+	password varchar(100) not null,
+	username varchar(50) not null unique,
+	role varchar(50) not null
 );
 
 create table EventTypes(
@@ -21,7 +21,7 @@ create table Events(
 	eventId int identity(2000, 1) primary key,
 	eventName varchar(50) not null,
 	description varchar(100) not null,
-	eventDate varchar(11) not null,
+	eventDate date not null,
 	location varchar(100) not null,
 	organiserId int,
 	foreign key(organiserId) references Users(userId),
@@ -39,7 +39,7 @@ create table Categories(
 create table Enrolments(
 	enrolmentId int identity(4000, 1) primary key,
 	participentId int,
-	foreign key(participentId) references Users(userId),
+	foreign key(participantId) references Users(userId),
 	eventId int,
 	foreign key(eventId) references Events(eventId),
 	categoryId int,
@@ -55,4 +55,5 @@ create table Results(
 	finishTime varchar(100),
 	finishPosition int
 );
+
 

@@ -35,3 +35,14 @@ create table Categories(
 	eventId int,
 	foreign key(eventId) references Events(eventId)
 );
+
+create table Enrolments(
+	enrolmentId int identity(4000, 1) primary key,
+	participentId int,
+	foreign key(participentId) references Users(userId),
+	eventId int,
+	foreign key(eventId) references Events(eventId),
+	categoryId int,
+	foreign key(categoryId) references Categories(categoryId),
+	enrolmentStatus varchar(10) not null
+);

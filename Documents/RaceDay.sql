@@ -72,3 +72,7 @@ values	('Run Jozi', '100km marathon', '2026-10-09', 'Ghandi Square', 1000, 5000)
 insert into Categories(categoryName, eventId)
 values	('100Km', 2002),
 		('10Km', 2003);
+
+insert into Enrolments(participantId, eventId, categoryId, enrolmentStatus)
+values	(1002, 2002, 6000, 'Enrolled'),
+		(1003, 2003, 6001, 'Enrolled');

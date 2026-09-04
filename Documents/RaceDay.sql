@@ -69,4 +69,6 @@ values	('Run Jozi', '100km marathon', '2026-10-09', 'Ghandi Square', 1000, 5000)
 		('Swim Meet', '10Km swim', '2026-9-10', 'Richards Bay', 1001, 5001),
 		('Tour de Jozi', '150km race', '2026-10-20', 'Braamfontein', 1000, 5002)
 
-
+insert into Categories(categoryName, eventId)
+values	('100Km', 2002),
+		('10Km', 2003);

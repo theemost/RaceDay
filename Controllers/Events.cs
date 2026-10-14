@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using RaceDay.DbConnection;
 
 namespace RaceDay.Controllers
 {
@@ -7,10 +8,12 @@ namespace RaceDay.Controllers
     [ApiController]
     public class Events : ControllerBase
     {
-        [HttpPost]
+        [HttpGet]
         public string GetEvents()
         {
-            return "Jello";
+            Db_connection db = new Db_connection();
+            string message = db.GetEvents();
+            return message;
         }
     }
 }

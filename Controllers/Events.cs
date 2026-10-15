@@ -77,10 +77,35 @@ namespace RaceDay.Controllers
             return NoContent();
         }
     }
+
+    //Event Types Controller
     [Route("api/[controller]")]
     [ApiController]
     public class EventTypes : ControllerBase
     {
+        [HttpGet]
+        public List<EventType> GetEventTypes()
+        {
+            Db_connection db = new Db_connection();
+            List<EventType> data_found = db.GetEventTypes();
+            return data_found;
+        }
+
+        [HttpGet("{eventTypeId}")]
+        public EventType? GetEventType(int eventTypeId)
+        {
+            Db_connection db = new Db_connection();
+            EventType? data_found = db.GetEventType(eventTypeId);
+            return data_found;
+        }
+        
+        [HttpPost]
+        public EventType? AddEventType(string eventTypeName)
+        {
+            Db_connection db = new Db_connection();
+            EventType? data_found = db.AddEventType(eventTypeName);
+            return data_found;
+        }
     }
 
     [Route("api/[controller]")]

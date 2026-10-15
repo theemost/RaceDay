@@ -17,7 +17,7 @@ namespace RaceDay.DbConnection
                 {
                     connect.Open();
                     string query = @"select * from Users where username = @username and password = @password;";
-                    using (SqlCommand get_user = new SqlCommand(query, connect)) 
+                    using (SqlCommand get_user = new SqlCommand(query, connect))
                     {
                         get_user.Parameters.AddWithValue("@username", username);
                         get_user.Parameters.AddWithValue("@password", password);
@@ -25,7 +25,7 @@ namespace RaceDay.DbConnection
                         SqlDataReader user = get_user.ExecuteReader();
 
                         if (user.Read())
-                        { 
+                        {
                             {
                                 message += "User found...\nSuccessfully logged in";
                             }
@@ -39,7 +39,7 @@ namespace RaceDay.DbConnection
                     }
                 }
             }
-            catch (Exception error) 
+            catch (Exception error)
             {
                 message = error.Message;
             }
@@ -147,7 +147,7 @@ namespace RaceDay.DbConnection
                 using (SqlConnection connect = new SqlConnection(connection))
                 {//using
                     connect.Open();
-                        
+
                     string query = @"select	eventName as 'Event Name',
 		                                    description as 'Description',
 		                                    eventDate as 'Date',
@@ -162,7 +162,7 @@ namespace RaceDay.DbConnection
                     {
                         get_event.Parameters.AddWithValue("@eventId", eventId);
                         SqlDataReader reader = get_event.ExecuteReader();
-                        
+
                         if (reader.Read())
                         {
                             return new Event
@@ -259,14 +259,14 @@ namespace RaceDay.DbConnection
                         if (event_data == 0)
                         {
                             return null;
-                        }               
+                        }
                     }
                 }
                 return GetEvent(eventId);
             }
             catch (Exception error)
             {
-                 throw new InvalidOperationException("Unable to update the event.", error);
+                throw new InvalidOperationException("Unable to update the event.", error);
             }
         }
 
@@ -287,7 +287,7 @@ namespace RaceDay.DbConnection
                         connect.Open();
 
                         int rowsAffected = command.ExecuteNonQuery();
-
+                        connect.Close();
                         return rowsAffected > 0;
                     }
                 }
@@ -299,6 +299,96 @@ namespace RaceDay.DbConnection
             }
         }
 
+        //Event types
+        public List<EventType> GetEventTypes()
+        {
+            List<EventType> eventTypes = new List<EventType>();
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"select * from EventTypes;";
+                    SqlCommand event_type_data = new SqlCommand(query, connect);
+                    connect.Open();
+                    SqlDataReader reader = event_type_data.ExecuteReader();
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            eventTypes.Add(new EventType
+                            {
+                                EventTypeId = (int)reader["eventTypeId"],
+                                EventTypeName = reader["eventTypeName"].ToString()!
+                            });
+                        }
+                        connect.Close();
+                    }
+                }
+            }
+            catch (SqlException error)
+            {
+                throw new InvalidOperationException(
+                    "Unable to retrieve the event types from the database.", error);
+            }
+            return eventTypes;
+        }
+
+        public EventType? GetEventType(int eventTypeId)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"select * from EventTypes where eventTypeId = @eventTypeId;";
+                    using (SqlCommand get_event_type = new SqlCommand(query, connect))
+                    {
+                        get_event_type.Parameters.AddWithValue("@eventTypeId", eventTypeId);
+                        connect.Open();
+                        SqlDataReader reader = get_event_type.ExecuteReader();
+                        if (reader.Read())
+                        {
+                            return new EventType
+                            {
+                                EventTypeId = (int)reader["eventTypeId"],
+                                EventTypeName = reader["eventTypeName"].ToString()!
+                            };
+                        }
+                    }
+                }
+            }
+            catch (SqlException error)
+            {
+                throw new InvalidOperationException(
+                    "Unable to retrieve the event type from the database.", error);
+            }
+            return null;
+        }
+
+        public EventType? AddEventType(string eventTypeName)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"insert into EventTypes(eventTypeName) values (@eventTypeName);";
+                    using (SqlCommand add_event_type = new SqlCommand(query, connect))
+                    {
+                        add_event_type.Parameters.AddWithValue("@eventTypeName", eventTypeName);
+                        connect.Open();
+                        add_event_type.ExecuteNonQuery();
+                        return new EventType
+                        {
+                            EventTypeName = eventTypeName
+                        };
+                    }
+                }
+            }
+            catch (SqlException error)
+            {
+                throw new InvalidOperationException(
+                    "Unable to add the event type to the database.", error);
+            }
+        }
     }
 }
 

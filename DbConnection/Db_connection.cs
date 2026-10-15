@@ -191,6 +191,114 @@ namespace RaceDay.DbConnection
             }
             return null;
         }
+
+        public Event? AddEvent(string eventName, string description, DateTime eventDate, string location, int eventTypeId, int organiserId)
+        {
+            string message = "error adding event....";
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    connect.Open();
+                    string query = @"insert into Events(eventName, description, eventDate, location, eventTypeId, organiserId)  
+                                    values (@eventName, @description, @eventDate, @location, @eventTypeId, @organiserId);";
+                    using (SqlCommand add_event_type = new SqlCommand(query, connect))
+                    {
+                        add_event_type.Parameters.AddWithValue("@eventName", eventName);
+                        add_event_type.Parameters.AddWithValue("@description", description);
+                        add_event_type.Parameters.AddWithValue("@eventDate", eventDate);
+                        add_event_type.Parameters.AddWithValue("@location", location);
+                        add_event_type.Parameters.AddWithValue("@eventTypeId", eventTypeId);
+                        add_event_type.Parameters.AddWithValue("@organiserId", organiserId);
+
+                        add_event_type.ExecuteNonQuery();
+                        return new Event
+                        {
+                            EventName = eventName,
+                            Description = description,
+                            EventDate = eventDate.ToString(),
+                            Location = location,
+                            EventType = eventTypeId.ToString(),
+                            Organiser = organiserId.ToString()
+                        };
+                    }
+                }
+            }
+            catch (SqlException error)
+            {
+                throw new InvalidOperationException("Unable to retrieve the event from the database.", error);
+            }
+        }
+
+        public Event? EditEvent(int eventId, string eventName, string description, DateTime eventDate, string location, int eventTypeId, int organiserId)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"update Events 
+                                    set eventName =@eventName, 
+                                        description =@description,
+                                        eventDate = @eventDate,
+                                        location = @location,
+                                        eventTypeId = @eventTypeId,
+                                        organiserId = @organiserId
+                                    where eventId = @eventId;";
+                    using (SqlCommand get_event = new SqlCommand(query, connect))
+                    {
+                        get_event.Parameters.AddWithValue("@eventId", eventId);
+                        get_event.Parameters.AddWithValue("@eventName", eventName);
+                        get_event.Parameters.AddWithValue("@description", description);
+                        get_event.Parameters.AddWithValue("@eventDate", eventDate);
+                        get_event.Parameters.AddWithValue("@location", location);
+                        get_event.Parameters.AddWithValue("@eventTypeId", eventTypeId);
+                        get_event.Parameters.AddWithValue("@organiserId", organiserId);
+
+                        connect.Open();
+                        int event_data = get_event.ExecuteNonQuery();
+                        if (event_data == 0)
+                        {
+                            return null;
+                        }               
+                    }
+                }
+                return GetEvent(eventId);
+            }
+            catch (Exception error)
+            {
+                 throw new InvalidOperationException("Unable to update the event.", error);
+            }
+        }
+
+
+        public bool DeleteEvent(int eventId)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"delete from Events
+                where eventId = @eventId;";
+
+                    using (SqlCommand command = new SqlCommand(query, connect))
+                    {
+                        command.Parameters.AddWithValue("@eventId", eventId);
+
+                        connect.Open();
+
+                        int rowsAffected = command.ExecuteNonQuery();
+
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (SqlException error) when (error.Number == 547) // Foreign key violation
+            {
+                throw new InvalidOperationException(
+                    "Unable to delete the event because it's referenced by other tables.", error);
+            }
+        }
+
     }
 }
 

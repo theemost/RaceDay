@@ -45,6 +45,37 @@ namespace RaceDay.Controllers
             Event? data_found = db.GetEvent(eventId);
             return data_found;
         }
+
+        [HttpPost]
+        public Event? AddEvent(string eventName, string description, DateTime eventDate, string location, int eventType, int organiser)
+        {
+            Db_connection db = new Db_connection();
+            Event? data_found = db.AddEvent(eventName, description, eventDate, location, eventType, organiser);
+            return data_found;
+        }
+
+        [HttpPut("{eventId}")]
+        public Event? EditEvent(int eventId, string eventName, string description, DateTime eventDate, string location, int eventTypeId, int organiserId)
+        {
+            Db_connection db = new Db_connection();
+            Event? data_found = db.EditEvent(eventId, eventName, description, eventDate, location, eventTypeId, organiserId);
+            return data_found;
+        }
+
+        [HttpDelete("{eventId}")]
+        public IActionResult DeleteEvent(int eventId)
+        {
+            Db_connection db = new Db_connection();
+
+            bool deleted = db.DeleteEvent(eventId);
+
+            if (!deleted)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
     }
     [Route("api/[controller]")]
     [ApiController]

@@ -110,6 +110,57 @@ namespace RaceDay.Controllers
 
     [Route("api/[controller]")]
     [ApiController]
+    public class Categories : ControllerBase
+    {
+        [HttpPost]
+        public Category? AddCategory(string categoryName, int eventId)
+        {
+            Db_connection db = new Db_connection();
+            Category? data_found = db.AddCategory(categoryName, eventId);
+            return data_found;
+        }
+
+        [HttpGet]
+        public List<Category> GetCategories()
+        {
+            Db_connection db = new Db_connection();
+            List<Category> data_found = db.GetCategories();
+            return data_found;
+        }
+
+        [HttpGet("{categoryId}")]
+        public Category? GetCategory(int categoryId)
+        {
+            Db_connection db = new Db_connection();
+            Category? data_found = db.GetCategory(categoryId);
+            return data_found;
+        }
+        
+        [HttpPut("{categoryId}")]
+        public Category? EditCategory(int categoryId, string categoryName, int eventId)
+        {
+            Db_connection db = new Db_connection();
+            Category? data_found = db.EditCategory(categoryId, categoryName, eventId);
+            return data_found;
+        }
+
+        [HttpDelete("{categoryId}")]
+        public IActionResult DeleteCategory(int categoryId)
+        {
+            Db_connection db = new Db_connection();
+
+            bool deleted = db.DeleteCategory(categoryId);
+
+            if (!deleted)
+            {
+                return NotFound();
+            }
+            return NoContent();
+        }
+    }
+
+    [Route("api/[controller]")]
+    [ApiController]
     public class Enrolments : ControllerBase
     {
     }

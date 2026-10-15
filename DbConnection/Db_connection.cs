@@ -389,6 +389,164 @@ namespace RaceDay.DbConnection
                     "Unable to add the event type to the database.", error);
             }
         }
+
+        //Categories
+        public List<Category> GetCategories()
+        {
+            List<Category> categories = new List<Category>();
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"select categoryId, categoryName, Categories.eventId, Events.eventName 
+                                    from Categories 
+                                    inner join Events on Events.eventId = Categories.eventId;";
+                    SqlCommand category_data = new SqlCommand(query, connect);
+                    connect.Open();
+                    SqlDataReader reader = category_data.ExecuteReader();
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            categories.Add(new Category
+                            {
+                                CategoryId = (int)reader["categoryId"],
+                                CategoryName = reader["categoryName"].ToString()!,
+                                EventId = (int)reader["eventId"],
+                                EventName = reader["eventName"].ToString()!
+                            });
+                        }
+                        connect.Close();
+                    }
+                }
+            }
+            catch (SqlException error)
+            {
+                throw new InvalidOperationException(
+                    "Unable to retrieve the categories from the database.", error);
+            }
+            return categories;
+        }
+
+        public Category? AddCategory(string categoryName, int eventId)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"insert into Categories(categoryName, eventId) values (@categoryName, @eventId);";
+                    using (SqlCommand add_category = new SqlCommand(query, connect))
+                    {
+                        add_category.Parameters.AddWithValue("@categoryName", categoryName);
+                        add_category.Parameters.AddWithValue("@eventId", eventId);
+                        connect.Open();
+                        add_category.ExecuteNonQuery();
+                        return new Category
+                        {
+                            CategoryName = categoryName,
+                            EventId = eventId
+                        };
+                    }
+                }
+            }
+            catch (SqlException error)
+            {
+                throw new InvalidOperationException(
+                    "Unable to add the category to the database.", error);
+            }
+        }
+
+        public Category? GetCategory(int categoryId)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"select categoryId, categoryName, Categories.eventId, Events.eventName 
+                                    from Categories 
+                                    inner join Events on Events.eventId = Categories.eventId
+                                    where categoryId = @categoryId;";
+                    using (SqlCommand get_category = new SqlCommand(query, connect))
+                    {
+                        get_category.Parameters.AddWithValue("@categoryId", categoryId);
+                        connect.Open();
+                        SqlDataReader reader = get_category.ExecuteReader();
+                        if (reader.Read())
+                        {
+                            return new Category
+                            {
+                                CategoryId = (int)reader["categoryId"],
+                                CategoryName = reader["categoryName"].ToString()!,
+                                EventId = (int)reader["eventId"],
+                                EventName = reader["eventName"].ToString()!
+                            };
+                        }
+                    }
+                }
+            }
+            catch (SqlException error)
+            {
+                throw new InvalidOperationException(
+                    "Unable to retrieve the category from the database.", error);
+            }
+            return null;
+        }
+
+        public Category? EditCategory(int categoryId, string categoryName, int eventId)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"update Categories 
+                                    set categoryName = @categoryName, 
+                                        eventId = @eventId
+                                    where categoryId = @categoryId;";
+                    using (SqlCommand edit_category = new SqlCommand(query, connect))
+                    {
+                        edit_category.Parameters.AddWithValue("@categoryId", categoryId);
+                        edit_category.Parameters.AddWithValue("@categoryName", categoryName);
+                        edit_category.Parameters.AddWithValue("@eventId", eventId);
+                        connect.Open();
+                        int rowsAffected = edit_category.ExecuteNonQuery();
+                        if (rowsAffected == 0)
+                        {
+                            return null;
+                        }
+                    }
+                }
+                return GetCategory(categoryId);
+            }
+            catch (Exception error)
+            {
+                throw new InvalidOperationException("Unable to update the category.", error);
+            }
+        }
+
+        public bool DeleteCategory(int categoryId)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"delete from Categories
+                                    where categoryId = @categoryId;";
+                    using (SqlCommand command = new SqlCommand(query, connect))
+                    {
+                        command.Parameters.AddWithValue("@categoryId", categoryId);
+                        connect.Open();
+                        int rowsAffected = command.ExecuteNonQuery();
+                        connect.Close();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (SqlException error) when (error.Number == 547) // Foreign key violation
+            {
+                throw new InvalidOperationException(
+                    "Unable to delete the category because it's referenced by other tables.", error);
+            }
+        }
     }
 }
 

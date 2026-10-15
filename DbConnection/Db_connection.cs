@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using RaceDay.Models;
 
 namespace RaceDay.DbConnection
 {
@@ -54,7 +55,8 @@ namespace RaceDay.DbConnection
                 using (SqlConnection connect = new SqlConnection(connection))
                 {
                     connect.Open();
-                    string query = @"insert into Users (firstName, lastName, emailAddress, username, password, role) values (@firstName, @lastName, @emailAddress, @username, @password, @role);";
+                    string query = @"insert into Users (firstName, lastName, emailAddress, username, password, role)
+                                     values (@firstName, @lastName, @emailAddress, @username, @password, @role);";
                     using (SqlCommand register_user = new SqlCommand(query, connect))
                     {
                         register_user.Parameters.AddWithValue("@firstName", firstName);
@@ -66,7 +68,6 @@ namespace RaceDay.DbConnection
                         register_user.ExecuteNonQuery();
                         message = "User registered successfully";
                         connect.Close();
-                        
                     }
                 }
             }
@@ -77,32 +78,45 @@ namespace RaceDay.DbConnection
             return message;
         }
 
-        //EVENTS//EVENTS
-        public string GetEvents()
+        //EVENTS****EVENTS
+        public List<Event> GetEvents()
         {
+            List<Event> events = new List<Event>();
             string message = string.Empty;
             try
             {
                 using (SqlConnection connect = new SqlConnection(connection))
                 {
-                    string query = @"select * from Events;";
-                    SqlCommand get_events = new SqlCommand(query, connect);
+                    string query = @"select	eventId as 'Event ID',
+                                            eventName as 'Event Name',
+		                                    description as 'Description',
+		                                    eventDate as 'Date',
+		                                    location as 'Location',
+		                                    EventTypes.eventTypeName as 'Event Type',
+		                                    Users.firstName + ' ' + Users.lastName as Organiser
+                                    from Events 
+                                    inner join Users on Users.userId = Events.organiserId
+                                    inner join EventTypes on EventTypes.eventTypeId = Events.eventTypeId;";
+                    SqlCommand event_data = new SqlCommand(query, connect);
                     connect.Open();
-                    SqlDataReader event_data = get_events.ExecuteReader();
+                    SqlDataReader reader = event_data.ExecuteReader();
 
                     //Check if database empty
-                    if (event_data.HasRows)
-                    {//Start of if
+                    if (reader.HasRows)
+                    {
                         //get data per column
-                        while (event_data.Read())
-                        {//start of while
-                            message += $"Event Name: {event_data["eventName"]}" + "\n";
-                            message += $"Description: {event_data["description"]}" + "\n";
-                            message += $"Date: {event_data["eventDate"]}" + "\n";
-                            message += $"Location: {event_data["location"]}" + "\n";
-                            message += $"Event Type: {event_data["eventTypeId"]}" + "\n";
-                            message += $"Organiser: {event_data["organiserId"]}" + "\n";
-                            message += "---------------------------" + "\n";
+                        while (reader.Read())
+                        {
+                            events.Add(new Event
+                            {
+                                EventId = (int)reader["Event Id"],
+                                EventName = reader["Event Name"].ToString()!,
+                                Description = reader["Description"].ToString()!,
+                                EventDate = reader["Date"].ToString()!,
+                                Location = reader["Location"].ToString()!,
+                                EventType = reader["Event Type"].ToString()!,
+                                Organiser = reader["Organiser"].ToString()!
+                            });
                         }//end of while
 
                         connect.Close();
@@ -115,12 +129,69 @@ namespace RaceDay.DbConnection
                     }
                 }
             }
-
-            catch (Exception error)
+            catch (SqlException error)
             {
-                message = error.Message;
+                // Log the error appropriately in a real application.
+                throw new InvalidOperationException(
+                    "Unable to retrieve the event from the database.", error);
             }
-            return message;
+            return events;
+        }
+
+        public Event? GetEvent(int eventId)
+        {//GetEvent
+            string message = string.Empty;
+
+            try
+            {//Try
+                using (SqlConnection connect = new SqlConnection(connection))
+                {//using
+                    connect.Open();
+                        
+                    string query = @"select	eventName as 'Event Name',
+		                                    description as 'Description',
+		                                    eventDate as 'Date',
+		                                    location as 'Location',
+		                                    EventTypes.eventTypeName as 'Event Type',
+		                                    Users.firstName + ' ' + Users.lastName as Organiser
+                                    from Events 
+                                    inner join Users on Users.userId = Events.organiserId
+                                    inner join EventTypes on EventTypes.eventTypeId = Events.eventTypeId
+                                    where Events.eventId = @eventId;";
+                    using (SqlCommand get_event = new SqlCommand(query, connect))
+                    {
+                        get_event.Parameters.AddWithValue("@eventId", eventId);
+                        SqlDataReader reader = get_event.ExecuteReader();
+                        
+                        if (reader.Read())
+                        {
+                            return new Event
+                            {
+                                EventId = @eventId,
+                                EventName = reader["Event Name"].ToString()!,
+                                Description = reader["Description"].ToString()!,
+                                EventDate = reader["Date"].ToString()!,
+                                Location = reader["Location"].ToString()!,
+                                EventType = reader["Event Type"].ToString()!,
+                                Organiser = reader["Organiser"].ToString()!
+                            };
+                        }
+                        else
+                        {
+                            message = "Event not found";
+                        }
+                    }
+                }//using
+            }//Try
+            catch (SqlException error)
+            {
+                // Log the error appropriately in a real application.
+                throw new InvalidOperationException(
+                    "Unable to retrieve the event from the database.", error);
+            }
+            return null;
         }
     }
 }
+
+

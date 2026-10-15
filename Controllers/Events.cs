@@ -1,27 +1,15 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RaceDay.DbConnection;
+using RaceDay.Models;
 
 namespace RaceDay.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class Events : ControllerBase
-    {
-        [HttpGet]
-        public string GetEvents()
-        {
-            Db_connection db = new Db_connection();
-            string message = db.GetEvents();
-            return message;
-        }
-    }
-
-    [Route("api/[controller]")]
-    [ApiController]
     public class Users : ControllerBase
     {
-        [HttpGet]
+        [HttpGet("login/")]
         public string login(string username, string password)
         {
             Db_connection db = new Db_connection();
@@ -36,5 +24,43 @@ namespace RaceDay.Controllers
             string message = db.register(firstName, lastName, emailAddress, username, password, role);
             return message;
         }
+    }
+
+    [Route("api/[controller]")]
+    [ApiController]
+    public class Events : ControllerBase
+    {
+        [HttpGet]
+        public List<Event> GetEvents()
+        {
+            Db_connection db = new Db_connection();
+            List<Event> events = db.GetEvents();
+            return events;
+        }
+
+        [HttpGet("{eventId}")]
+        public Event? GetEvent(int eventId)
+        {
+            Db_connection db = new Db_connection();
+            Event? data_found = db.GetEvent(eventId);
+            return data_found;
+        }
+    }
+    [Route("api/[controller]")]
+    [ApiController]
+    public class EventTypes : ControllerBase
+    {
+    }
+
+    [Route("api/[controller]")]
+    [ApiController]
+    public class Enrolments : ControllerBase
+    {
+    }
+
+    [Route("api/[controller]")]
+    [ApiController]
+    public class Results : ControllerBase
+    {
     }
 }

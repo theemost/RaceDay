@@ -1,11 +1,21 @@
 ﻿using Microsoft.Data.SqlClient;
+using Microsoft.IdentityModel.Tokens;
+using RaceDay.Models;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace RaceDay.DbConnection
 {
     public class Authenticator
     {
-        Db_connection db = new Db_connection();
-        private string connection = @"Data source=(localdb)\RaceDay;Database=RaceDay;";
+        private readonly IConfiguration configuration;
+        private readonly string connection =@"Data source=(localdb)\RaceDay;Database=RaceDay;";
+
+        public Authenticator(IConfiguration configuration)
+        {
+            this.configuration = configuration;
+        }
 
         //REGISTER
         public string register(string firstName, string lastName, string emailAddress, string username, string password, string role)
@@ -49,19 +59,23 @@ namespace RaceDay.DbConnection
             {
                 using (SqlConnection connect = new SqlConnection(connection))
                 {
-                    string query = @"select password from Users where username = @username";
+                    string query = @"select userId,password from Users where username = @username";
                     using (SqlCommand get_user = new SqlCommand(query, connect))
                     {
                         get_user.Parameters.AddWithValue("@username", username);
                         connect.Open();
 
-                        object? result = get_user.ExecuteScalar();
-
-                        if (result != null && result != DBNull.Value)
+                        using (SqlDataReader reader = get_user.ExecuteReader())
                         {
-                            string storedHash = result.ToString()!;
+                            if (!reader.Read())
+                            {
+                                return "Invalid username or password.";
+                            }
+
+                            int userId = Convert.ToInt32(reader["userId"]);
+                            string stored_hash = reader["password"].ToString()!;            
                             // Verify the password
-                            if (BCrypt.Net.BCrypt.Verify(password, result.ToString()!))
+                            if (BCrypt.Net.BCrypt.Verify(password, stored_hash))
                             {
                                 message = "User found...\nSuccessfully logged in";
                             }
@@ -69,21 +83,41 @@ namespace RaceDay.DbConnection
                             {
                                 message = "Incorrect password...\nPlease check your password and try again";
                             }
-                            connect.Close();
-                        }
-                        else
-                        {
-                            message = "User not found...\nPlease check your username and password";
-                            connect.Close();
+                            reader.Close();
+
+                            string jwtKey = configuration["Jwt:Key"]
+                                ?? throw new InvalidOperationException(
+                                    "JWT key is not configured.");
+
+                            var key = new SymmetricSecurityKey(
+                                Encoding.UTF8.GetBytes(jwtKey));
+
+                            var credentials = new SigningCredentials(
+                                key, SecurityAlgorithms.HmacSha256);
+
+                            var claims = new[]
+                            {
+                        new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                        new Claim(ClaimTypes.Name, username)
+                    };
+
+                            var token = new JwtSecurityToken(
+                                issuer: "RaceDay",
+                                audience: "RaceDayUsers",
+                                claims: claims,
+                                expires: DateTime.UtcNow.AddHours(1),
+                                signingCredentials: credentials);
+
+                            return new JwtSecurityTokenHandler()
+                                .WriteToken(token);
                         }
                     }
                 }
             }
             catch (Exception error)
             {
-                message = error.Message;
+                return error.Message;
             }
-            return message;
         }
 
     }

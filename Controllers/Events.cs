@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using RaceDay.DbConnection;
 using RaceDay.Models;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RaceDay.Controllers
 {
@@ -9,10 +11,18 @@ namespace RaceDay.Controllers
     [ApiController]
     public class Authentication : ControllerBase
     {
+
+        private readonly IConfiguration configuration;
+
+        public Authentication(IConfiguration configuration)
+        {
+            this.configuration = configuration;
+        }
+
         [HttpGet("login/")]
         public string login(string username, string password)
         {
-            Authenticator authenticate = new Authenticator();
+            Authenticator authenticate = new Authenticator(configuration);
             string message = authenticate.login(username, password);
             return message;
         }
@@ -20,9 +30,66 @@ namespace RaceDay.Controllers
         [HttpPost("register/")]
         public string register(string firstName, string lastName, string emailAddress, string username, string password, string role)
         {
-            Authenticator authenticate = new Authenticator();
+            Authenticator authenticate = new Authenticator(configuration);
             string message = authenticate.register(firstName, lastName, emailAddress, username, password, role);
             return message;
+        }
+    }
+
+    [Route("api/[controller]")]
+    [ApiController]
+    public class UserInformation : ControllerBase
+    {
+        [Authorize]
+        [HttpGet("profile")]
+        public IActionResult GetProfile()
+        {
+            string? userId = User.FindFirst(
+                ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            if (!int.TryParse(userId, out int id))
+            {
+                return Unauthorized();
+            }
+
+            Db_connection db = new Db_connection();
+
+            User? user = db.GetUser(id);
+
+            if (user == null)
+            {
+                return NotFound("User profile not found.");
+            }
+
+            return Ok(user);
+        }
+
+        [Authorize]
+        [HttpPut("update_profile")]
+        public IActionResult UpdateProfile(string firstName, string lastName, string emailAddress, string username, string password, string role)
+        {
+            string? userId = User.FindFirst(
+                ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+            if (!int.TryParse(userId, out int id))
+            {
+                return Unauthorized();
+            }
+            Db_connection db = new Db_connection();
+            User? updatedUser = db.UpdateUser(id, firstName, lastName, emailAddress, username, password);
+            if (updatedUser == null)
+            {
+                return NotFound("User profile not found.");
+            }
+            return Ok(updatedUser);
         }
     }
 

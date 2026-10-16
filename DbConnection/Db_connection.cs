@@ -8,45 +8,6 @@ namespace RaceDay.DbConnection
     {
         private string connection = @"Data source=(localdb)\RaceDay;Database=RaceDay;";
 
-        //LOGIN
-        public string login(string username, string password)
-        {
-            string message = string.Empty;
-            try
-            {
-                using (SqlConnection connect = new SqlConnection(connection))
-                {
-                    connect.Open();
-                    string query = @"select * from Users where username = @username and password = @password;";
-                    using (SqlCommand get_user = new SqlCommand(query, connect))
-                    {
-                        get_user.Parameters.AddWithValue("@username", username);
-                        get_user.Parameters.AddWithValue("@password", password);
-
-                        SqlDataReader user = get_user.ExecuteReader();
-
-                        if (user.Read())
-                        {
-                            {
-                                username = user["username"].ToString()!;
-                                message += "User found...\nSuccessfully logged in";
-                            }
-                            connect.Close();
-                        }
-                        else
-                        {
-                            message = "User not found...\nPlease check your username and password";
-                            connect.Close();
-                        }
-                    }
-                }
-            }
-            catch (Exception error)
-            {
-                message = error.Message;
-            }
-            return message;
-        }
         public User? GetUser(int userId)
         {
             try
@@ -68,7 +29,6 @@ namespace RaceDay.DbConnection
                                 LastName = reader["lastName"].ToString()!,
                                 EmailAddress = reader["emailAddress"].ToString()!,
                                 username = reader["username"].ToString()!,
-                                Password = reader["password"].ToString()!,
                                 Role = reader["role"].ToString()!
                             };
                         }
@@ -878,6 +838,52 @@ namespace RaceDay.DbConnection
             {
                 throw new InvalidOperationException(
                     "Unable to add the result to the database.", error);
+            }
+        }
+
+        //User profile***************************************User profile******************************
+        public User? UpdateUser(int userId, string firstName, string lastName, string emailAddress, string username, string role)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"
+                UPDATE Users
+                SET firstName = @firstName,
+                    lastName = @lastName,
+                    emailAddress = @emailAddress,
+                    username = @username,
+                    role = @role
+                WHERE userId = @userId;";
+
+                    using (SqlCommand user_profile = new SqlCommand(query, connect))
+                    {
+                        user_profile.Parameters.AddWithValue("@userId", userId);
+                        user_profile.Parameters.AddWithValue("@firstName", firstName);
+                        user_profile.Parameters.AddWithValue("@lastName", lastName);
+                        user_profile.Parameters.AddWithValue("@emailAddress", emailAddress);
+                        user_profile.Parameters.AddWithValue("@username", username);
+                        user_profile.Parameters.AddWithValue("@role", role);
+
+                        connect.Open();
+
+                        int rowsAffected = user_profile.ExecuteNonQuery();
+
+                        if (rowsAffected == 0)
+                        {
+                            return null;
+                        }
+                    }
+                }
+
+                // Return the updated profile
+                return GetUser(userId);
+            }
+            catch (SqlException error)
+            {
+                throw new InvalidOperationException(
+                    "Unable to update the user information.", error);
             }
         }
     }

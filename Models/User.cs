@@ -9,6 +9,5 @@
         public string Password { get; set; } = string.Empty;
         public string username { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty; 
-        public bool Authenticated { get; set; } = false;
     }
 }

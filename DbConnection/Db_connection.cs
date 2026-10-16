@@ -863,8 +863,6 @@ namespace RaceDay.DbConnection
                         user_profile.Parameters.AddWithValue("@lastName", lastName);
                         user_profile.Parameters.AddWithValue("@emailAddress", emailAddress);
                         user_profile.Parameters.AddWithValue("@username", username);
-                        user_profile.Parameters.AddWithValue("@role", role);
-
                         connect.Open();
 
                         int rowsAffected = user_profile.ExecuteNonQuery();

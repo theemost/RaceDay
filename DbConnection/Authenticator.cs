@@ -78,7 +78,7 @@ namespace RaceDay.DbConnection
                             // Verify the password
                             if (!BCrypt.Net.BCrypt.Verify(password, stored_hash))
                             {
-                                message = "Incorrect password...\nPlease check your password and try again";
+                                return "Incorrect password...\nPlease check your password and try again";
                             }
         
                             reader.Close();

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using RaceDay.Controllers;
 using RaceDay.Models;
 
 namespace RaceDay.DbConnection
@@ -232,7 +233,6 @@ namespace RaceDay.DbConnection
 
         public Event? AddEvent(string eventName, string description, DateTime eventDate, string location, int eventTypeId, int organiserId)
         {
-            string message = "error adding event....";
             try
             {
                 using (SqlConnection connect = new SqlConnection(connection))
@@ -592,7 +592,8 @@ namespace RaceDay.DbConnection
             {
                 using (SqlConnection connect = new SqlConnection(connection))
                 {
-                    string query = @"select enrolmentId , participantId, Users.firstName + ' ' + Users.lastName as participantName, Categories.categoryName, Events.eventName, enrolmentStatus
+                    string query = @"select Enrolments.enrolmentId, Enrolments.participantId, Users.firstName + ' ' + Users.lastName as participantName,
+                                    Categories.categoryId, Categories.categoryName,  Events.eventId, Events.eventName, Enrolments.enrolmentStatus
                                     from Enrolments
                                     inner join Users on Users.userId = Enrolments.participantId
                                     inner join Categories on Categories.categoryId = Enrolments.categoryId
@@ -609,7 +610,9 @@ namespace RaceDay.DbConnection
                                 EnrolmentId = (int)reader["enrolmentId"],
                                 ParticipantId = (int)reader["participantId"],
                                 ParticipantName = reader["participantName"].ToString()!,
+                                CategoryId = (int)reader["categoryId"],
                                 Category = reader["categoryName"].ToString()!,
+                                EventId = (int)reader["eventId"],
                                 Event = reader["eventName"].ToString()!,
                                 EnrolmentStatus = reader["enrolmentStatus"].ToString()!
                             });
@@ -648,7 +651,9 @@ namespace RaceDay.DbConnection
                             EnrolmentId = newEnrolmentId,
                             ParticipantId = participantId,
                             ParticipantName = GetUser(participantId)?.FirstName + " " + GetUser(participantId)?.LastName ?? string.Empty,
+                            CategoryId = categoryId,
                             Category = GetCategory(categoryId)?.CategoryName ?? string.Empty,
+                            EventId = eventId,
                             Event = GetEvent(eventId)?.EventName ?? string.Empty,
                             EnrolmentStatus = enrolmentStatus
                         };
@@ -669,7 +674,7 @@ namespace RaceDay.DbConnection
                 using (SqlConnection connect = new SqlConnection(connection))
                 {
                     string query = @"select Enrolments.enrolmentId, Enrolments.participantId, Users.firstName + ' ' + Users.lastName as participantName, 
-                                            Categories.categoryName, Events.eventName, Enrolments.enrolmentStatus
+                                            Categories.CategoryId, Categories.categoryName, Events.eventId, Events.eventName, Enrolments.enrolmentStatus
                                     from Enrolments
                                     inner join Users on Users.userId = Enrolments.participantId
                                     inner join Categories on Categories.categoryId = Enrolments.categoryId
@@ -687,7 +692,9 @@ namespace RaceDay.DbConnection
                                 EnrolmentId = (int)reader["enrolmentId"],
                                 ParticipantId = (int)reader["participantId"],
                                 ParticipantName = reader["participantName"].ToString()!,
+                                CategoryId = (int)reader["categoryId"],
                                 Category = reader["categoryName"].ToString()!,
+                                EventId = (int)reader["eventId"],
                                 Event = reader["eventName"].ToString()!,
                                 EnrolmentStatus = reader["enrolmentStatus"].ToString()!
                             };
@@ -703,7 +710,7 @@ namespace RaceDay.DbConnection
             return null;
         }
 
-        public Enrolment? EditEnrolment(int enrolmentId, string participantId, int categoryId, int eventId, string enrolmentStatus)
+        public Enrolment? EditEnrolment(int enrolmentId, int participantId, int categoryId, int eventId, string enrolmentStatus)
         {
             try
             {
@@ -760,6 +767,151 @@ namespace RaceDay.DbConnection
             {
                 throw new InvalidOperationException(
                     "Unable to delete the enrolment because it's referenced by other tables.", error);
+            }
+        }
+
+
+        //Results**********************************************Results******************************
+        public List<Result> GetResults()
+        {
+            List<Result> results = new List<Result>();
+
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"select
+                                        Results.resultId,
+                                        Results.enrolmentId,
+                                        Enrolments.participantId,
+                                        Users.firstName + ' ' + Users.lastName AS participantName,
+                                        Enrolments.eventId,
+                                        Events.eventName,
+                                        Results.finishTime,
+                                        Results.finishPosition
+                                    from Results
+                                    inner join Enrolments on Enrolments.enrolmentId = Results.enrolmentId
+                                    inner join Users on Users.userId = Enrolments.participantId
+                                    left join Events on Events.eventId = Enrolments.eventId;";
+
+                    using (SqlCommand result_data =
+                           new SqlCommand(query, connect))
+                    {
+                        connect.Open();
+
+                        using (SqlDataReader reader = result_data.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                results.Add(new Result
+                                {
+                                    ResultId = (int)reader["resultId"],
+                                    EnrolmentId = (int)reader["enrolmentId"],
+                                    ParticipantName = reader["participantName"].ToString()!,
+                                    EventId = (int)reader["eventId"],
+                                    EventName = reader["eventName"].ToString()!,
+                                    FinishTime = (TimeSpan)reader["finishTime"],
+                                    Position = (int)reader["finishPosition"]
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (SqlException error)
+            {
+                throw new InvalidOperationException(
+                    "Unable to retrieve the results from the database.", error);
+            }
+
+            return results;
+        }
+
+        public List<Result> GetResultsByEventId(int eventId)
+        {
+            List<Result> results = new List<Result>();
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"select
+                                        Results.resultId,
+                                        Results.enrolmentId,
+                                        Users.firstName + ' ' + Users.lastName AS participantName,
+                                        Events.eventId,
+                                        Events.eventName,
+                                        Results.finishTime,
+                                        Results.finishPosition
+                                    from Results
+                                    inner join Enrolments on Enrolments.enrolmentId = Results.enrolmentId
+                                    inner join Users on Users.userId = Enrolments.participantId
+                                    inner join Events on Events.eventId = Enrolments.eventId
+                                    where Events.eventId = @eventId;";
+                    using (SqlCommand get_result = new SqlCommand(query, connect))
+                    {
+                        get_result.Parameters.AddWithValue("@eventId", eventId);
+                        connect.Open();
+                        SqlDataReader reader = get_result.ExecuteReader();
+                        while (reader.Read())
+                        {
+                            results.Add(new Result
+                            {
+                                ResultId = (int)reader["resultId"],
+                                EnrolmentId = (int)reader["enrolmentId"],
+                                ParticipantName = reader["participantName"].ToString()!,
+                                EventId = (int)reader["eventId"],
+                                EventName = reader["eventName"].ToString()!,
+                                FinishTime = (TimeSpan)reader["finishTime"],
+                                Position = (int)reader["finishPosition"]
+                            });
+                        }
+                        Console.WriteLine($"Results retrieved: {results.Count}");
+                    }
+                }
+            }
+            catch (SqlException error)
+            {
+                throw new InvalidOperationException(
+                    "Unable to retrieve the result from the database.", error);
+            }
+            return results;
+        }
+
+        public Result? AddResult(int enrolmentId, TimeSpan finishTime, int position)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"insert into Results(enrolmentId, finishTime, finishPosition) 
+                                    values (@enrolmentId, @finishTime, @position);
+                                    select cast(scope_identity() as int);";
+                    using (SqlCommand add_result = new SqlCommand(query, connect))
+                    {
+                        add_result.Parameters.AddWithValue("@enrolmentId", enrolmentId);
+                        add_result.Parameters.AddWithValue("@finishTime", finishTime);
+                        add_result.Parameters.AddWithValue("@position", position);
+                        connect.Open();
+                        int newResultId = (int)add_result.ExecuteScalar()!;
+                        return new Result
+                        {
+                            ResultId = newResultId,
+                            EnrolmentId = enrolmentId,
+                            ParticipantName = GetUser(GetEnrolment(enrolmentId).ParticipantId).FirstName + " " 
+                                            + GetUser(GetEnrolment(enrolmentId).ParticipantId)?.LastName?? string.Empty,
+                            
+                            EventName = GetEnrolment(enrolmentId)?.Event ?? string.Empty,
+                            EventId = GetEnrolment(enrolmentId)?.EventId ?? 0,
+                            FinishTime = finishTime,
+                            Position = position
+                        };
+                    }
+                }
+            }
+            catch (SqlException error)
+            {
+                throw new InvalidOperationException(
+                    "Unable to add the result to the database.", error);
             }
         }
     }

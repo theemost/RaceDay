@@ -16,7 +16,7 @@ namespace RaceDay.Controllers
             string message = db.login(username, password);
             return message;
         }
-        
+
         [HttpPost("register/")]
         public string register(string firstName, string lastName, string emailAddress, string username, string password, string role)
         {
@@ -98,7 +98,7 @@ namespace RaceDay.Controllers
             EventType? data_found = db.GetEventType(eventTypeId);
             return data_found;
         }
-        
+
         [HttpPost]
         public EventType? AddEventType(string eventTypeName)
         {
@@ -110,6 +110,7 @@ namespace RaceDay.Controllers
 
     [Route("api/[controller]")]
     [ApiController]
+
     public class Categories : ControllerBase
     {
         [HttpPost]
@@ -120,7 +121,7 @@ namespace RaceDay.Controllers
             return data_found;
         }
 
-        [HttpGet]
+        [HttpGet("get_categories")]
         public List<Category> GetCategories()
         {
             Db_connection db = new Db_connection();
@@ -128,15 +129,15 @@ namespace RaceDay.Controllers
             return data_found;
         }
 
-        [HttpGet("{categoryId}")]
+        [HttpGet("get_category/{categoryId}")]
         public Category? GetCategory(int categoryId)
         {
             Db_connection db = new Db_connection();
             Category? data_found = db.GetCategory(categoryId);
             return data_found;
         }
-        
-        [HttpPut("{categoryId}")]
+
+        [HttpPut("edit/{categoryId}")]
         public Category? EditCategory(int categoryId, string categoryName, int eventId)
         {
             Db_connection db = new Db_connection();
@@ -144,7 +145,7 @@ namespace RaceDay.Controllers
             return data_found;
         }
 
-        [HttpDelete("{categoryId}")]
+        [HttpDelete("delete/{categoryId}")]
         public IActionResult DeleteCategory(int categoryId)
         {
             Db_connection db = new Db_connection();
@@ -163,7 +164,7 @@ namespace RaceDay.Controllers
     [ApiController]
     public class Enrolments : ControllerBase
     {
-        [HttpGet]
+        [HttpGet("enrolments")]
         public List<Enrolment> GetEnrolments()
         {
             Db_connection db = new Db_connection();
@@ -188,7 +189,7 @@ namespace RaceDay.Controllers
         }
 
         [HttpPut("edit_enrolment/{enrolmentId}")]
-        public Enrolment? EditEnrolment(int enrolmentId, string participantId, int eventId, int categoryId, string enrolmentStatus)
+        public Enrolment? EditEnrolment(int enrolmentId, int participantId, int categoryId, int eventId, string enrolmentStatus)
         {
             Db_connection db = new Db_connection();
             Enrolment? data_found = db.EditEnrolment(enrolmentId, participantId, categoryId, eventId, enrolmentStatus);
@@ -214,5 +215,29 @@ namespace RaceDay.Controllers
     [ApiController]
     public class Results : ControllerBase
     {
-    }
+        [HttpGet("get_results")]
+        public List<Result> GetResults()
+        {
+            Console.WriteLine("Results controller called.");
+            Db_connection db = new Db_connection();
+            List<Result> result_data = db.GetResults();
+            return result_data;
+        }
+
+        [HttpPost("new_result")]
+        public Result? AddResult(int enrolmentId, TimeSpan finishTime, int position)
+        {
+            Db_connection db = new Db_connection();
+            Result? data_found = db.AddResult(enrolmentId, finishTime, position);
+            return data_found;
+        }
+
+        [HttpGet("Events/{eventId}")]
+        public List<Result> GetResults(int eventId)
+        {
+            Db_connection db = new Db_connection();
+            List<Result> data_found = db.GetResultsByEventId(eventId);
+            return data_found;
+        }
+    } 
 }

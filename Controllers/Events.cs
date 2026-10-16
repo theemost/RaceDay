@@ -71,7 +71,7 @@ namespace RaceDay.Controllers
 
         [Authorize]
         [HttpPut("update_profile")]
-        public IActionResult UpdateProfile(string firstName, string lastName, string emailAddress, string username, string password, string role)
+        public IActionResult UpdateProfile(string firstName, string lastName, string emailAddress, string username)
         {
             string? userId = User.FindFirst(
                 ClaimTypes.NameIdentifier)?.Value;
@@ -84,7 +84,7 @@ namespace RaceDay.Controllers
                 return Unauthorized();
             }
             Db_connection db = new Db_connection();
-            User? updatedUser = db.UpdateUser(id, firstName, lastName, emailAddress, username, password);
+            User? updatedUser = db.UpdateUser(id, firstName, lastName, emailAddress, username);
             if (updatedUser == null)
             {
                 return NotFound("User profile not found.");
@@ -113,6 +113,7 @@ namespace RaceDay.Controllers
             return data_found;
         }
 
+        [Authorize(Roles = "Organiser")]
         [HttpPost]
         public Event? AddEvent(string eventName, string description, DateTime eventDate, string location, int eventType, int organiser)
         {
@@ -121,6 +122,7 @@ namespace RaceDay.Controllers
             return data_found;
         }
 
+        [Authorize(Roles = "Organiser")]
         [HttpPut("{eventId}")]
         public Event? EditEvent(int eventId, string eventName, string description, DateTime eventDate, string location, int eventTypeId, int organiserId)
         {
@@ -129,6 +131,7 @@ namespace RaceDay.Controllers
             return data_found;
         }
 
+        [Authorize(Roles = "Organiser")]
         [HttpDelete("{eventId}")]
         public IActionResult DeleteEvent(int eventId)
         {
@@ -149,7 +152,7 @@ namespace RaceDay.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class EventTypes : ControllerBase
-    {
+    {   
         [HttpGet]
         public List<EventType> GetEventTypes()
         {
@@ -166,6 +169,7 @@ namespace RaceDay.Controllers
             return data_found;
         }
 
+        [Authorize(Roles = "Organiser")]
         [HttpPost]
         public EventType? AddEventType(string eventTypeName)
         {
@@ -177,9 +181,9 @@ namespace RaceDay.Controllers
 
     [Route("api/[controller]")]
     [ApiController]
-
     public class Categories : ControllerBase
     {
+        [Authorize(Roles = "Organiser")]
         [HttpPost]
         public Category? AddCategory(string categoryName, int eventId)
         {
@@ -204,6 +208,7 @@ namespace RaceDay.Controllers
             return data_found;
         }
 
+        [Authorize(Roles = "Organiser")]
         [HttpPut("edit/{categoryId}")]
         public Category? EditCategory(int categoryId, string categoryName, int eventId)
         {
@@ -212,6 +217,7 @@ namespace RaceDay.Controllers
             return data_found;
         }
 
+        [Authorize(Roles = "Organiser")]
         [HttpDelete("delete/{categoryId}")]
         public IActionResult DeleteCategory(int categoryId)
         {
@@ -231,6 +237,7 @@ namespace RaceDay.Controllers
     [ApiController]
     public class Enrolments : ControllerBase
     {
+        [Authorize(Roles = "Organiser")]
         [HttpGet("enrolments")]
         public List<Enrolment> GetEnrolments()
         {
@@ -239,6 +246,7 @@ namespace RaceDay.Controllers
             return data_found;
         }
 
+        [Authorize]
         [HttpGet("get_enrolment/{enrolmentId}")]
         public Enrolment? GetEnrolment(int enrolmentId)
         {
@@ -247,6 +255,7 @@ namespace RaceDay.Controllers
             return data_found;
         }
 
+        [Authorize]
         [HttpPost("new_enrolment")]
         public Enrolment? AddEnrolment(int participantId, int eventId, int categoryId, string enrolmentStatus)
         {
@@ -255,6 +264,7 @@ namespace RaceDay.Controllers
             return data_found;
         }
 
+        [Authorize(Roles = "Organiser")]
         [HttpPut("edit_enrolment/{enrolmentId}")]
         public Enrolment? EditEnrolment(int enrolmentId, int participantId, int categoryId, int eventId, string enrolmentStatus)
         {
@@ -263,6 +273,7 @@ namespace RaceDay.Controllers
             return data_found;
         }
 
+        [Authorize(Roles = "Organiser")]
         [HttpDelete("delete_enrolment/{enrolmentId}")]
         public IActionResult DeleteEnrolment(int enrolmentId)
         {
@@ -282,6 +293,7 @@ namespace RaceDay.Controllers
     [ApiController]
     public class Results : ControllerBase
     {
+        [Authorize]
         [HttpGet("get_results")]
         public List<Result> GetResults()
         {
@@ -291,6 +303,7 @@ namespace RaceDay.Controllers
             return result_data;
         }
 
+        [Authorize(Roles = "Organiser")]
         [HttpPost("new_result")]
         public Result? AddResult(int enrolmentId, TimeSpan finishTime, int position)
         {
@@ -299,6 +312,7 @@ namespace RaceDay.Controllers
             return data_found;
         }
 
+        [Authorize(Roles = "Organiser")]
         [HttpGet("Events/{eventId}")]
         public List<Result> GetResults(int eventId)
         {

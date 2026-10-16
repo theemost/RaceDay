@@ -842,7 +842,7 @@ namespace RaceDay.DbConnection
         }
 
         //User profile***************************************User profile******************************
-        public User? UpdateUser(int userId, string firstName, string lastName, string emailAddress, string username, string role)
+        public User? UpdateUser(int userId, string firstName, string lastName, string emailAddress, string username)
         {
             try
             {
@@ -854,7 +854,6 @@ namespace RaceDay.DbConnection
                     lastName = @lastName,
                     emailAddress = @emailAddress,
                     username = @username,
-                    role = @role
                 WHERE userId = @userId;";
 
                     using (SqlCommand user_profile = new SqlCommand(query, connect))

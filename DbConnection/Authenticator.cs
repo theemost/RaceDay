@@ -59,7 +59,7 @@ namespace RaceDay.DbConnection
             {
                 using (SqlConnection connect = new SqlConnection(connection))
                 {
-                    string query = @"select userId,password from Users where username = @username";
+                    string query = @"select userId, password, role from Users where username = @username";
                     using (SqlCommand get_user = new SqlCommand(query, connect))
                     {
                         get_user.Parameters.AddWithValue("@username", username);
@@ -72,17 +72,15 @@ namespace RaceDay.DbConnection
                                 return "Invalid username or password.";
                             }
 
-                            int userId = Convert.ToInt32(reader["userId"]);
-                            string stored_hash = reader["password"].ToString()!;            
+                            int user_id = Convert.ToInt32(reader["userId"]);
+                            string stored_hash = reader["password"].ToString()!;
+                            string user_role = reader["role"].ToString()!;
                             // Verify the password
-                            if (BCrypt.Net.BCrypt.Verify(password, stored_hash))
-                            {
-                                message = "User found...\nSuccessfully logged in";
-                            }
-                            else
+                            if (!BCrypt.Net.BCrypt.Verify(password, stored_hash))
                             {
                                 message = "Incorrect password...\nPlease check your password and try again";
                             }
+        
                             reader.Close();
 
                             string jwtKey = configuration["Jwt:Key"]
@@ -97,9 +95,10 @@ namespace RaceDay.DbConnection
 
                             var claims = new[]
                             {
-                        new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-                        new Claim(ClaimTypes.Name, username)
-                    };
+                                new Claim(ClaimTypes.NameIdentifier, user_id.ToString()),
+                                new Claim(ClaimTypes.Name, username),
+                                new Claim(ClaimTypes.Role, user_role)
+                            };
 
                             var token = new JwtSecurityToken(
                                 issuer: "RaceDay",

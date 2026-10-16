@@ -6,6 +6,7 @@ namespace RaceDay.DbConnection
     public class Db_connection
     {
         private string connection = @"Data source=(localdb)\RaceDay;Database=RaceDay;";
+        private string username = string.Empty;
 
         //LOGIN
         public string login(string username, string password)
@@ -27,6 +28,7 @@ namespace RaceDay.DbConnection
                         if (user.Read())
                         {
                             {
+                                username = user["username"].ToString()!;
                                 message += "User found...\nSuccessfully logged in";
                             }
                             connect.Close();
@@ -76,6 +78,42 @@ namespace RaceDay.DbConnection
                 message = error.Message;
             }
             return message;
+        }
+
+        public User? GetUser(int userId)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"select * from Users where userId = @userId;";
+                    using (SqlCommand get_user = new SqlCommand(query, connect))
+                    {
+                        get_user.Parameters.AddWithValue("@userId", userId);
+                        connect.Open();
+                        SqlDataReader reader = get_user.ExecuteReader();
+                        if (reader.Read())
+                        {
+                            return new User
+                            {
+                                UserId = (int)reader["userId"],
+                                FirstName = reader["firstName"].ToString()!,
+                                LastName = reader["lastName"].ToString()!,
+                                EmailAddress = reader["emailAddress"].ToString()!,
+                                username = reader["username"].ToString()!,
+                                Password = reader["password"].ToString()!,
+                                Role = reader["role"].ToString()!
+                            };
+                        }
+                    }
+                }
+            }
+            catch (SqlException error)
+            {
+                throw new InvalidOperationException(
+                    "Unable to retrieve the user from the database.", error);
+            }
+            return null;
         }
 
         //EVENTS****EVENTS
@@ -412,7 +450,6 @@ namespace RaceDay.DbConnection
                             {
                                 CategoryId = (int)reader["categoryId"],
                                 CategoryName = reader["categoryName"].ToString()!,
-                                EventId = (int)reader["eventId"],
                                 EventName = reader["eventName"].ToString()!
                             });
                         }
@@ -444,7 +481,7 @@ namespace RaceDay.DbConnection
                         return new Category
                         {
                             CategoryName = categoryName,
-                            EventId = eventId
+                            EventName = GetEvent(eventId)?.EventName ?? string.Empty
                         };
                     }
                 }
@@ -477,7 +514,6 @@ namespace RaceDay.DbConnection
                             {
                                 CategoryId = (int)reader["categoryId"],
                                 CategoryName = reader["categoryName"].ToString()!,
-                                EventId = (int)reader["eventId"],
                                 EventName = reader["eventName"].ToString()!
                             };
                         }
@@ -545,6 +581,185 @@ namespace RaceDay.DbConnection
             {
                 throw new InvalidOperationException(
                     "Unable to delete the category because it's referenced by other tables.", error);
+            }
+        }
+
+        //Enrolments********************************************************
+        public List<Enrolment> GetEnrolments()
+        {
+            List<Enrolment> enrolments = new List<Enrolment>();
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"select enrolmentId , participantId, Users.firstName + ' ' + Users.lastName as participantName, Categories.categoryName, Events.eventName, enrolmentStatus
+                                    from Enrolments
+                                    inner join Users on Users.userId = Enrolments.participantId
+                                    inner join Categories on Categories.categoryId = Enrolments.categoryId
+                                    inner join Events on Events.eventId = Categories.eventId;";
+                    SqlCommand enrolment_data = new SqlCommand(query, connect);
+                    connect.Open();
+                    SqlDataReader reader = enrolment_data.ExecuteReader();
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            enrolments.Add(new Enrolment
+                            {
+                                EnrolmentId = (int)reader["enrolmentId"],
+                                ParticipantId = (int)reader["participantId"],
+                                ParticipantName = reader["participantName"].ToString()!,
+                                Category = reader["categoryName"].ToString()!,
+                                Event = reader["eventName"].ToString()!,
+                                EnrolmentStatus = reader["enrolmentStatus"].ToString()!
+                            });
+                        }
+                        connect.Close();
+                    }
+                }
+            }
+            catch (SqlException error)
+            {
+                throw new InvalidOperationException(
+                    "Unable to retrieve the enrolments from the database.", error);
+            }
+            return enrolments;
+        }
+
+        public Enrolment? AddEnrolment(int participantId, int eventId, int categoryId, string enrolmentStatus)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"insert into Enrolments(participantId, categoryId,eventId, enrolmentStatus) 
+                                    values (@participantId, @categoryId, @eventId, @enrolmentStatus);
+                                    select cast(scope_identity() as int);";
+                    using (SqlCommand add_enrolment = new SqlCommand(query, connect))
+                    {
+                        add_enrolment.Parameters.AddWithValue("@participantId", participantId);
+                        add_enrolment.Parameters.AddWithValue("@categoryId", categoryId);
+                        add_enrolment.Parameters.AddWithValue("@eventId", eventId);
+                        add_enrolment.Parameters.AddWithValue("@enrolmentStatus", enrolmentStatus);
+                        connect.Open();
+                        int newEnrolmentId = (int)add_enrolment.ExecuteScalar()!;
+                        return new Enrolment
+                        {
+                            EnrolmentId = newEnrolmentId,
+                            ParticipantId = participantId,
+                            ParticipantName = GetUser(participantId)?.FirstName + " " + GetUser(participantId)?.LastName ?? string.Empty,
+                            Category = GetCategory(categoryId)?.CategoryName ?? string.Empty,
+                            Event = GetEvent(eventId)?.EventName ?? string.Empty,
+                            EnrolmentStatus = enrolmentStatus
+                        };
+                    }
+                }
+            }
+            catch (SqlException error)
+            {
+                throw new InvalidOperationException(
+                    "Unable to add the enrolment to the database.", error);
+            }
+        }
+
+        public Enrolment? GetEnrolment(int enrolmentId)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"select Enrolments.enrolmentId, Enrolments.participantId, Users.firstName + ' ' + Users.lastName as participantName, 
+                                            Categories.categoryName, Events.eventName, Enrolments.enrolmentStatus
+                                    from Enrolments
+                                    inner join Users on Users.userId = Enrolments.participantId
+                                    inner join Categories on Categories.categoryId = Enrolments.categoryId
+                                    inner join Events on Events.eventId = Categories.eventId
+                                    where enrolmentId = @enrolmentId;";
+                    using (SqlCommand get_enrolment = new SqlCommand(query, connect))
+                    {
+                        get_enrolment.Parameters.AddWithValue("@enrolmentId", enrolmentId);
+                        connect.Open();
+                        SqlDataReader reader = get_enrolment.ExecuteReader();
+                        if (reader.Read())
+                        {
+                            return new Enrolment
+                            {
+                                EnrolmentId = (int)reader["enrolmentId"],
+                                ParticipantId = (int)reader["participantId"],
+                                ParticipantName = reader["participantName"].ToString()!,
+                                Category = reader["categoryName"].ToString()!,
+                                Event = reader["eventName"].ToString()!,
+                                EnrolmentStatus = reader["enrolmentStatus"].ToString()!
+                            };
+                        }
+                    }
+                }
+            }
+            catch (SqlException error)
+            {
+                throw new InvalidOperationException(
+                    "Unable to retrieve the enrolment from the database.", error);
+            }
+            return null;
+        }
+
+        public Enrolment? EditEnrolment(int enrolmentId, string participantId, int categoryId, int eventId, string enrolmentStatus)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"update Enrolments 
+                                    set participantId = @participantId, 
+                                        categoryId = @categoryId, 
+                                        eventId = @eventId,
+                                        enrolmentStatus = @enrolmentStatus
+                                    where enrolmentId = @enrolmentId;";
+                    using (SqlCommand edit_enrolment = new SqlCommand(query, connect))
+                    {
+                        edit_enrolment.Parameters.AddWithValue("@enrolmentId", enrolmentId);
+                        edit_enrolment.Parameters.AddWithValue("@participantId", participantId);
+                        edit_enrolment.Parameters.AddWithValue("@categoryId", categoryId);
+                        edit_enrolment.Parameters.AddWithValue("@eventId", eventId);
+                        edit_enrolment.Parameters.AddWithValue("@enrolmentStatus", enrolmentStatus);
+                        connect.Open();
+                        int rowsAffected = edit_enrolment.ExecuteNonQuery();
+                        if (rowsAffected == 0)
+                        {
+                            return null;
+                        }
+                    }
+                }
+                return GetEnrolment(enrolmentId);
+            }
+            catch (Exception error)
+            {
+                throw new InvalidOperationException("Unable to update the enrolment.", error);
+            }
+        }
+
+        public bool DeleteEnrolment(int enrolmentId)
+        {
+            try
+            {
+                using (SqlConnection connect = new SqlConnection(connection))
+                {
+                    string query = @"delete from Enrolments
+                                    where enrolmentId = @enrolmentId;";
+                    using (SqlCommand command = new SqlCommand(query, connect))
+                    {
+                        command.Parameters.AddWithValue("@enrolmentId", enrolmentId);
+                        connect.Open();
+                        int rowsAffected = command.ExecuteNonQuery();
+                        connect.Close();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (SqlException error) when (error.Number == 547) // Foreign key violation
+            {
+                throw new InvalidOperationException(
+                    "Unable to delete the enrolment because it's referenced by other tables.", error);
             }
         }
     }

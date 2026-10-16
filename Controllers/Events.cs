@@ -7,7 +7,7 @@ namespace RaceDay.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class Users : ControllerBase
+    public class Authentication : ControllerBase
     {
         [HttpGet("login/")]
         public string login(string username, string password)
@@ -163,6 +163,51 @@ namespace RaceDay.Controllers
     [ApiController]
     public class Enrolments : ControllerBase
     {
+        [HttpGet]
+        public List<Enrolment> GetEnrolments()
+        {
+            Db_connection db = new Db_connection();
+            List<Enrolment> data_found = db.GetEnrolments();
+            return data_found;
+        }
+
+        [HttpGet("get_enrolment/{enrolmentId}")]
+        public Enrolment? GetEnrolment(int enrolmentId)
+        {
+            Db_connection db = new Db_connection();
+            Enrolment? data_found = db.GetEnrolment(enrolmentId);
+            return data_found;
+        }
+
+        [HttpPost("new_enrolment")]
+        public Enrolment? AddEnrolment(int participantId, int eventId, int categoryId, string enrolmentStatus)
+        {
+            Db_connection db = new Db_connection();
+            Enrolment? data_found = db.AddEnrolment(participantId, eventId, categoryId, enrolmentStatus);
+            return data_found;
+        }
+
+        [HttpPut("edit_enrolment/{enrolmentId}")]
+        public Enrolment? EditEnrolment(int enrolmentId, string participantId, int eventId, int categoryId, string enrolmentStatus)
+        {
+            Db_connection db = new Db_connection();
+            Enrolment? data_found = db.EditEnrolment(enrolmentId, participantId, categoryId, eventId, enrolmentStatus);
+            return data_found;
+        }
+
+        [HttpDelete("delete_enrolment/{enrolmentId}")]
+        public IActionResult DeleteEnrolment(int enrolmentId)
+        {
+            Db_connection db = new Db_connection();
+
+            bool deleted = db.DeleteEnrolment(enrolmentId);
+
+            if (!deleted)
+            {
+                return NotFound();
+            }
+            return NoContent();
+        }
     }
 
     [Route("api/[controller]")]

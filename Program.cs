@@ -1,6 +1,9 @@
-using Microsoft.OpenApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
+using RaceDay.Data;
+using RaceDay.DbConnection;
 using System.Text;
 
 namespace RaceDay
@@ -69,7 +72,64 @@ namespace RaceDay
                 });
 
             builder.Services.AddAuthorization();
+
+            var connectionString = builder.Configuration.GetConnectionString("RaceDayConnection")
+            ?? throw new InvalidOperationException("RaceDay connection string was not found.");
+
+            builder.Services.AddDbContext<RaceDayContext>(options => options.UseSqlServer(connectionString));
+
+            builder.Services.AddScoped<Db_connection>();
+
             var app = builder.Build();
+
+
+            app.MapGet("/db-check-users", async (RaceDayContext db) =>
+            {
+                var users = await db.Users
+                    .AsNoTracking()
+                    .Select(u => new
+                    {
+                        u.UserId,
+                        u.FirstName,
+                        u.LastName,
+                        u.EmailAddress,
+                        u.username,
+                        u.Role
+                    })
+                    .Take(5)
+                    .ToListAsync();
+
+                return Results.Ok(users);
+            });
+
+            app.MapGet("/db-check-events", async (RaceDayContext db) =>
+            {
+                var events = await db.Events
+                    .AsNoTracking()
+                    .Select(e => new //e:event
+                    {
+                        e.EventId,
+                        e.EventName,
+                        e.Description,
+                        e.EventDate,
+                        e.Location,
+                        e.EventType,
+                        e.Organiser,
+                    })
+                    .Take(5)
+                    .ToListAsync();
+
+                return Results.Ok(events);
+            });
+
+            app.MapGet("/db-check", async (RaceDayContext db) =>
+            {
+                bool connected = await db.Database.CanConnectAsync();
+
+                return connected
+                    ? Results.Ok("EF Core connected to RaceDay.")
+                    : Results.Problem("Could not connect to RaceDay.");
+            });
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

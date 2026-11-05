@@ -78,7 +78,7 @@ namespace RaceDay
 
             builder.Services.AddDbContext<RaceDayContext>(options => options.UseSqlServer(connectionString));
 
-            builder.Services.AddScoped<Db_connection>();
+            builder.Services.AddScoped<EventsConnection>();
 
             var app = builder.Build();
 

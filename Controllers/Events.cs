@@ -8,13 +8,14 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace RaceDay.Controllers
 {
+//    [Authorize(Role = "Organiser, Participant")]
     [Route("api/[controller]")]
     [ApiController]
     public class Events : ControllerBase
     {
-        private readonly Db_connection db;
+        private readonly EventsConnection db;
 
-        public Events(Db_connection db)
+        public Events(EventsConnection db)
         {
             this.db = db;
         }

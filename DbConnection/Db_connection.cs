@@ -1,5 +1,4 @@
 ﻿using Microsoft.Data.SqlClient;
-//using RaceDay.Controllers;
 using RaceDay.Models;
 using RaceDay.Data;
 using Microsoft.EntityFrameworkCore;
@@ -53,251 +52,7 @@ namespace RaceDay.DbConnection
             return null;
         }
 
-        //EVENTS****EVENTS
-        public List<Event> GetEvents()
-        {
-            List<Event> events = new List<Event>();
-            string message = string.Empty;
-            try
-            {
-                return _context.Events
-                    .AsNoTracking()
-                    .ToList();
-            }
-            catch (SqlException error)
-            {
-                // Log the error appropriately in a real application.
-                throw new InvalidOperationException(
-                    "Unable to retrieve events from the database.", error);
-            }
-        }
-
-        public Event? GetEvent(int eventId)
-        {//GetEvent
-            string message = string.Empty;
-
-            try
-            {//Try
-                var eventDetails =
-                        from events in _context.Events.AsNoTracking()
-                        join eventTypes in _context.EventTypes.AsNoTracking()
-                            on events.EventTypeId equals eventTypes.EventTypeId
-                        join users in _context.Users.AsNoTracking()
-                            on events.OrganiserId equals users.UserId
-                        where events.EventId == eventId
-                        select new Event
-                        {
-                            EventId = events.EventId,
-                            EventName = events.EventName,
-                            Description = events.Description,
-                            EventDate = events.EventDate,
-                            Location = events.Location,
-                            EventTypeId = events.EventTypeId,
-                            OrganiserId = events.OrganiserId,
-
-                            // Get names from the related tables
-                            EventType = eventTypes.EventTypeName,
-                            Organiser = users.FirstName + " " + users.LastName
-                        };
-
-                return eventDetails.FirstOrDefault();
-            }//Try
-            catch (SqlException error)
-            {
-                // Log the error appropriately in a real application.
-                throw new InvalidOperationException(
-                    "Unable to retrieve the event from the database.", error);
-            }
-        }
-
-        public Event? AddEvent(string eventName, string description, DateTime eventDate, string location, int eventTypeId, int organiserId)
-        {
-            try
-            {
-                var newEvent = new Event
-                {
-                    EventName = eventName,
-                    Description = description,
-                    EventDate = eventDate,
-                    Location = location,
-                    EventTypeId = eventTypeId,
-                    OrganiserId = organiserId
-                };
-
-                _context.Events.Add(newEvent);
-
-                _context.SaveChanges();
-
-                return newEvent;
-            }
-            catch (Exception error)
-            {
-                throw new InvalidOperationException(
-                    "Unable to add the event to the database.",
-                    error);
-            }
-        }
-
-        public Event? EditEvent(int eventId, string eventName, string description, DateTime eventDate, string location, int eventTypeId, int organiserId)
-        {
-            try
-            {
-                using (SqlConnection connect = new SqlConnection(connection))
-                {
-                    string query = @"update Events 
-                                    set eventName =@eventName, 
-                                        description =@description,
-                                        eventDate = @eventDate,
-                                        location = @location,
-                                        eventTypeId = @eventTypeId,
-                                        organiserId = @organiserId
-                                    where eventId = @eventId;";
-                    using (SqlCommand get_event = new SqlCommand(query, connect))
-                    {
-                        get_event.Parameters.AddWithValue("@eventId", eventId);
-                        get_event.Parameters.AddWithValue("@eventName", eventName);
-                        get_event.Parameters.AddWithValue("@description", description);
-                        get_event.Parameters.AddWithValue("@eventDate", eventDate);
-                        get_event.Parameters.AddWithValue("@location", location);
-                        get_event.Parameters.AddWithValue("@eventTypeId", eventTypeId);
-                        get_event.Parameters.AddWithValue("@organiserId", organiserId);
-
-                        connect.Open();
-                        int event_data = get_event.ExecuteNonQuery();
-                        if (event_data == 0)
-                        {
-                            return null;
-                        }
-                    }
-                }
-                return GetEvent(eventId);
-            }
-            catch (Exception error)
-            {
-                throw new InvalidOperationException("Unable to update the event.", error);
-            }
-        }
-
-
-        public bool DeleteEvent(int eventId)
-        {
-            try
-            {
-                using (SqlConnection connect = new SqlConnection(connection))
-                {
-                    string query = @"delete from Events
-                where eventId = @eventId;";
-
-                    using (SqlCommand command = new SqlCommand(query, connect))
-                    {
-                        command.Parameters.AddWithValue("@eventId", eventId);
-
-                        connect.Open();
-
-                        int rowsAffected = command.ExecuteNonQuery();
-                        connect.Close();
-                        return rowsAffected > 0;
-                    }
-                }
-            }
-            catch (SqlException error) when (error.Number == 547) // Foreign key violation
-            {
-                throw new InvalidOperationException(
-                    "Unable to delete the event because it's referenced by other tables.", error);
-            }
-        }
-
-        //Event types
-        public List<EventType> GetEventTypes()
-        {
-            List<EventType> eventTypes = new List<EventType>();
-            try
-            {
-                using (SqlConnection connect = new SqlConnection(connection))
-                {
-                    string query = @"select * from EventTypes;";
-                    SqlCommand event_type_data = new SqlCommand(query, connect);
-                    connect.Open();
-                    SqlDataReader reader = event_type_data.ExecuteReader();
-                    if (reader.HasRows)
-                    {
-                        while (reader.Read())
-                        {
-                            eventTypes.Add(new EventType
-                            {
-                                EventTypeId = (int)reader["eventTypeId"],
-                                EventTypeName = reader["eventTypeName"].ToString()!
-                            });
-                        }
-                        connect.Close();
-                    }
-                }
-            }
-            catch (SqlException error)
-            {
-                throw new InvalidOperationException(
-                    "Unable to retrieve the event types from the database.", error);
-            }
-            return eventTypes;
-        }
-
-        public EventType? GetEventType(int eventTypeId)
-        {
-            try
-            {
-                using (SqlConnection connect = new SqlConnection(connection))
-                {
-                    string query = @"select * from EventTypes where eventTypeId = @eventTypeId;";
-                    using (SqlCommand get_event_type = new SqlCommand(query, connect))
-                    {
-                        get_event_type.Parameters.AddWithValue("@eventTypeId", eventTypeId);
-                        connect.Open();
-                        SqlDataReader reader = get_event_type.ExecuteReader();
-                        if (reader.Read())
-                        {
-                            return new EventType
-                            {
-                                EventTypeId = (int)reader["eventTypeId"],
-                                EventTypeName = reader["eventTypeName"].ToString()!
-                            };
-                        }
-                    }
-                }
-            }
-            catch (SqlException error)
-            {
-                throw new InvalidOperationException(
-                    "Unable to retrieve the event type from the database.", error);
-            }
-            return null;
-        }
-
-        public EventType? AddEventType(string eventTypeName)
-        {
-            try
-            {
-                using (SqlConnection connect = new SqlConnection(connection))
-                {
-                    string query = @"insert into EventTypes(eventTypeName) values (@eventTypeName);";
-                    using (SqlCommand add_event_type = new SqlCommand(query, connect))
-                    {
-                        add_event_type.Parameters.AddWithValue("@eventTypeName", eventTypeName);
-                        connect.Open();
-                        add_event_type.ExecuteNonQuery();
-                        return new EventType
-                        {
-                            EventTypeName = eventTypeName
-                        };
-                    }
-                }
-            }
-            catch (SqlException error)
-            {
-                throw new InvalidOperationException(
-                    "Unable to add the event type to the database.", error);
-            }
-        }
-
+        
         //Categories
         public List<Category> GetCategories()
         {
@@ -335,7 +90,7 @@ namespace RaceDay.DbConnection
             return categories;
         }
 
-        public Category? AddCategory(string categoryName, int eventId)
+        /*public Category? AddCategory(string categoryName, int eventId)
         {
             try
             {
@@ -361,7 +116,7 @@ namespace RaceDay.DbConnection
                 throw new InvalidOperationException(
                     "Unable to add the category to the database.", error);
             }
-        }
+        }*/
 
         public Category? GetCategory(int categoryId)
         {
@@ -499,7 +254,7 @@ namespace RaceDay.DbConnection
             return enrolments;
         }
 
-        public Enrolment? AddEnrolment(int participantId, int eventId, int categoryId, string enrolmentStatus)
+        /*public Enrolment? AddEnrolment(int participantId, int eventId, int categoryId, string enrolmentStatus)
         {
             try
             {
@@ -535,7 +290,7 @@ namespace RaceDay.DbConnection
                 throw new InvalidOperationException(
                     "Unable to add the enrolment to the database.", error);
             }
-        }
+        }*/
 
         public Enrolment? GetEnrolment(int enrolmentId)
         {

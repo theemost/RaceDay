@@ -10,7 +10,7 @@ namespace RaceDay.Controllers
         private readonly IConfiguration configuration;
         private readonly Authenticator db;
 
-        public Authentication(IConfiguration configuration, Db_connection db)
+        public Authentication(IConfiguration configuration, Authenticator db)
         {
             this.db = db;
             this.configuration = configuration;

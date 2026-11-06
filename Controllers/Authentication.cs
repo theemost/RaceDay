@@ -8,7 +8,7 @@ namespace RaceDay.Controllers
     public class Authentication : ControllerBase
     {
         private readonly IConfiguration configuration;
-        private readonly Db_connection db;
+        private readonly Authenticator db;
 
         public Authentication(IConfiguration configuration, Db_connection db)
         {

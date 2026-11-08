@@ -7,7 +7,7 @@ create table Users(
 	firstName varchar(50) not null,
 	lastName varchar(50) not null,
 	emailAddress varchar(100) not null unique,
-	password varchar(100) not null,
+	password varchar(255) not null,
 	username varchar(50) not null unique,
 	role varchar(50) not null
 );

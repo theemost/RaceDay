@@ -1,0 +1,38 @@
+
+name: .NET
+
+on:
+  push:
+    branches: [ "main", "raceday_mvc" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Show project files
+        run: |
+          pwd
+          find . -maxdepth 4 \( -name "*.csproj" -o -name "*.slnx" \) -print
+
+      - name: Restore API
+        run: dotnet restore ./RaceDay/RaceDay.csproj
+
+      - name: Restore MVC
+        run: dotnet restore ./RaceDay.MVC/RaceDay.MVC.csproj
+
+      - name: Build API
+        run: dotnet build ./RaceDay/RaceDay.csproj --no-restore --configuration Release
+
+      - name: Build MVC
+        run: dotnet build ./RaceDay.MVC/RaceDay.MVC.csproj --no-restore --configuration Release

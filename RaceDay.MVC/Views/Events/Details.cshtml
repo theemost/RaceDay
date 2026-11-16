@@ -1,0 +1,259 @@
+﻿@model RaceDay.MVC.Models.Event
+
+@using RaceDay.MVC.Models
+
+@{
+    ViewData["Title"] = "Event Details";
+
+    var categories = ViewBag.Categories as List<Category>
+        ?? new List<Category>();
+
+    var enrolments = ViewBag.Enrolments as List<Enrolment>
+        ?? new List<Enrolment>();
+
+    bool isEventOrganiser = ViewBag.IsEventOrganiser == true;
+}
+
+<div class="container mt-4">
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h2>@Model.EventName</h2>
+            
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">
+                    @TempData["Success"]
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">
+                    @TempData["Error"]
+                </div>
+            }
+
+            <p><strong>Description:</strong> @Model.Description</p>
+
+            <p>
+                <strong>Date:</strong>
+                @Model.EventDate.ToString("dd MMMM yyyy")
+            </p>
+
+            <p><strong>Location:</strong> @Model.Location</p>
+
+            <p><strong>Event Type:</strong> @Model.EventType</p>
+
+            <p><strong>Organiser:</strong> @Model.Organiser</p>
+
+            @if (isEventOrganiser)
+            {
+                <a asp-controller="Categories"
+                   asp-action="Index"
+                   asp-route-eventId="@Model.EventId"
+                   class="btn btn-primary">
+                    <i class="bi bi-tags"></i>
+                    Manage Categories
+                </a>
+            }
+
+            <a asp-controller="Events"
+               asp-action="Index"
+               class="btn btn-secondary">
+                Back to Events
+            </a>
+
+        </div>
+    </div>
+
+    <!-- Event Categories -->
+    <h3 class="mb-3">Event Categories</h3>
+
+    @if (!categories.Any())
+    {
+        <div class="alert alert-info">
+            No categories have been added to this event yet.
+        </div>
+    }
+    else
+    {
+        @foreach (var category in categories)
+        {
+            var categoryEnrolments = enrolments
+                .Where(e => e.CategoryId == category.CategoryId)
+                .OrderBy(e => e.ParticipantName)
+                .ToList();
+
+            <div class="card shadow-sm mb-4">
+
+                <div class="card-header d-flex justify-content-between align-items-center">
+
+                    <h5 class="mb-0">
+                        @category.CategoryName
+                    </h5>
+
+                    @if (isEventOrganiser)
+                    {
+                        <div>
+                            <span class="badge bg-primary me-2">
+                                @categoryEnrolments.Count Participants
+                            </span>
+
+                            <a asp-controller="Categories"
+                               asp-action="Edit"
+                               asp-route-id="@category.CategoryId"
+                               class="btn btn-warning btn-sm">
+                                Edit
+                            </a>
+
+                            <form asp-controller="Categories"
+                                  asp-action="Delete"
+                                  asp-route-id="@category.CategoryId"
+                                  asp-route-eventId="@Model.EventId"
+                                  method="post"
+                                  style="display:inline;">
+
+                                @Html.AntiForgeryToken()
+
+                                <button type="submit"
+                                        class="btn btn-danger btn-sm"
+                                        onclick="return confirm('Are you sure you want to delete this category?');">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+
+                <div class="card-body">
+
+                    @if (isEventOrganiser)
+                    {
+                        @if (!categoryEnrolments.Any())
+                        {
+                            <p class="text-muted mb-0">
+                                No participants have enrolled in this category yet.
+                            </p>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+
+                                <table class="table table-striped table-bordered">
+
+                                    <thead>
+                                        <tr>
+                                            <th>Enrolment ID</th>
+                                            <th>Participant</th>
+                                            <th>Enrolment Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        @foreach (var enrolment in categoryEnrolments)
+                                        {
+                                            <tr>                                                
+                                                <td>@enrolment.EnrolmentId</td>
+                                                <td>@enrolment.ParticipantName</td>
+                                                <td>
+                                                    @if (enrolment.EnrolmentStatus == "Approved")
+                                                    {
+                                                        <span class="badge bg-success">
+                                                            Approved
+                                                        </span>
+                                                    }
+                                                    else if (enrolment.EnrolmentStatus == "Rejected")
+                                                    {
+                                                        <span class="badge bg-danger">
+                                                            Rejected
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-warning text-dark">
+                                                            @enrolment.EnrolmentStatus
+                                                        </span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (enrolment.EnrolmentStatus != "Approved")
+                                                    {
+                                                        <form asp-controller="Events"
+                                                              asp-action="UpdateEnrolmentStatus"
+                                                              method="post"
+                                                              style="display:inline;">
+
+                                                            @Html.AntiForgeryToken()
+
+                                                            <input type="hidden"
+                                                                   name="enrolmentId"
+                                                                   value="@enrolment.EnrolmentId" />
+
+                                                            <input type="hidden"
+                                                                   name="eventId"
+                                                                   value="@Model.EventId" />
+
+                                                            <input type="hidden"
+                                                                   name="status"
+                                                                   value="Approved" />
+
+                                                            <button type="submit"
+                                                                    class="btn btn-success btn-sm">
+                                                                Approve
+                                                            </button>
+                                                        </form>
+                                                    }
+
+                                                    @if (enrolment.EnrolmentStatus != "Rejected")
+                                                    {
+                                                        <form asp-controller="Events"
+                                                              asp-action="UpdateEnrolmentStatus"
+                                                              method="post"
+                                                              style="display:inline;">
+
+                                                            @Html.AntiForgeryToken()
+
+                                                            <input type="hidden"
+                                                                   name="enrolmentId"
+                                                                   value="@enrolment.EnrolmentId" />
+
+                                                            <input type="hidden"
+                                                                   name="eventId"
+                                                                   value="@Model.EventId" />
+
+                                                            <input type="hidden"
+                                                                   name="status"
+                                                                   value="Rejected" />
+
+                                                            <button type="submit"
+                                                                    class="btn btn-danger btn-sm">
+                                                                Reject
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">
+                            This category is available for event enrolment.
+                        </p>
+                    }
+
+                </div>
+            </div>
+        }
+    }
+
+</div>

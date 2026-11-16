@@ -1,0 +1,279 @@
+﻿@model RaceDay.MVC.Models.OrganiserDashboardViewModel
+
+@{
+    ViewData["Title"] = "Organiser Dashboard";
+}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>Organiser Dashboard</h1>
+            <p class="text-muted">
+                Welcome! Manage your events and monitor their activity.
+            </p>
+        </div>
+
+        <a asp-controller="Events"
+           asp-action="Create"
+           class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i>
+            Create New Event
+        </a>
+    </div>
+
+    <!-- Dashboard Statistics -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4 col-lg">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted">My Events</h6>
+                    <h2>@Model.TotalEvents</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted">Categories</h6>
+                    <h2>@Model.TotalCategories</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Enrolments</h6>
+                    <h2>@Model.TotalEnrolments</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted">Pending</h6>
+                    <h2 class="text-warning">@Model.PendingCount</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted">Approved</h6>
+                    <h2 class="text-success">@Model.ApprovedCount</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted">Rejected</h6>
+                    <h2 class="text-danger">@Model.RejectedCount</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted">Results Recorded</h6>
+                    <h2>@Model.TotalResults</h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Quick Links -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h5>Quick Management</h5>
+
+            <a asp-controller="Events"
+               asp-action="Create"
+               class="btn btn-outline-primary mb-2">
+                <i class="bi bi-calendar-plus"></i>
+                Create Event
+            </a>
+
+            <a asp-controller="EventTypes"
+               asp-action="Index"
+               class="btn btn-outline-primary me-2 mb-2">
+                <i class="bi bi-tags"></i>
+                Manage Event Types
+            </a>
+
+            <a asp-controller="Enrolments"
+               asp-action="Index"
+               class="btn btn-outline-primary me-2 mb-2">
+                <i class="bi bi-people"></i>
+                Manage Enrolments
+            </a>
+
+            <a asp-controller="Results"
+               asp-action="Index"
+               class="btn btn-outline-primary me-2 mb-2">
+                <i class="bi bi-trophy"></i>
+                Manage Results
+            </a>
+        </div>
+    </div>
+
+    <hr class="my-4" />
+
+    <!-- My Events -->
+    <h2 class="mb-3">My Events</h2>
+
+    @if (Model.Events == null || !Model.Events.Any())
+    {
+        <div class="alert alert-info">
+            You have not created any events yet.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+
+            @foreach (var item in Model.Events)
+            {
+                var categoryCount = Model.Categories
+                    .Count(c => c.EventId == item.EventId);
+
+                var eventEnrolments = Model.Enrolments
+                    .Where(e => e.EventId == item.EventId)
+                    .ToList();
+
+                var eventResults = Model.Results
+                    .Count(r => r.EventId == item.EventId);
+
+                <div class="col-md-6 col-lg-4 mb-4">
+
+                    <div class="card h-100 shadow-sm">
+
+                        <div class="card-body">
+
+                            <h5 class="card-title">
+                                @item.EventName
+                            </h5>
+
+                            <hr />
+
+                            <p>
+                                <strong>Date:</strong>
+                                @item.EventDate.ToString("dd MMMM yyyy")
+                            </p>
+
+                            <p>
+                                <strong>Location:</strong>
+                                @item.Location
+                            </p>
+
+                            <p>
+                                <strong>Event Type:</strong>
+                                @item.EventType
+                            </p>
+
+                            <div class="row text-center mb-3">
+
+                                <div class="col-4">
+                                    <h5>@categoryCount</h5>
+                                    <small class="text-muted">Categories</small>
+                                </div>
+
+                                <div class="col-4">
+                                    <h5>@eventEnrolments.Count</h5>
+                                    <small class="text-muted">Enrolments</small>
+                                </div>
+
+                                <div class="col-4">
+                                    <h5>@eventResults</h5>
+                                    <small class="text-muted">Results</small>
+                                </div>
+
+                            </div>
+
+                            <div class="mb-3">
+                                <span class="badge bg-success">
+                                    @eventEnrolments.Count(e =>
+                                        string.Equals(
+                                            e.EnrolmentStatus,
+                                            "Approved",
+                                            StringComparison.OrdinalIgnoreCase))
+                                    Approved
+                                </span>
+
+                                <span class="badge bg-warning text-dark">
+                                    @eventEnrolments.Count(e =>
+                                        string.Equals(
+                                            e.EnrolmentStatus,
+                                            "Pending",
+                                            StringComparison.OrdinalIgnoreCase))
+                                    Pending
+                                </span>
+
+                                <span class="badge bg-danger">
+                                    @eventEnrolments.Count(e =>
+                                        string.Equals(
+                                            e.EnrolmentStatus,
+                                            "Rejected",
+                                            StringComparison.OrdinalIgnoreCase))
+                                    Rejected
+                                </span>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-2">
+
+                                <a asp-controller="Events"
+                                   asp-action="Details"
+                                   asp-route-id="@item.EventId"
+                                   class="btn btn-primary btn-sm">
+                                    View Details
+                                </a>
+
+                                <a asp-controller="Categories"
+                                   asp-action="Index"
+                                   asp-route-eventId="@item.EventId"
+                                   class="btn btn-outline-primary btn-sm">
+                                    Categories
+                                </a>
+
+                                <a asp-controller="Events"
+                                   asp-action="Edit"
+                                   asp-route-id="@item.EventId"
+                                   class="btn btn-warning btn-sm">
+                                    Edit
+                                </a>
+
+                            </div>
+
+                            <form asp-controller="Events"
+                                  asp-action="Delete"
+                                  asp-route-id="@item.EventId"
+                                  method="post"
+                                  class="mt-2">
+
+                                @Html.AntiForgeryToken()
+
+                                <button type="submit"
+                                        class="btn btn-danger btn-sm"
+                                        onclick="return confirm('Are you sure you want to delete this event?');">
+                                    Delete Event
+                                </button>
+
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+</div>

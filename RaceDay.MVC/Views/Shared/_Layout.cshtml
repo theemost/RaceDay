@@ -1,0 +1,256 @@
+﻿
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - RaceDay.MVC</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/RaceDay.MVC.styles.css" asp-append-version="true" />
+</head>
+
+<body>
+    @{
+        var isLoggedIn = !string.IsNullOrEmpty(Context.Session.GetString("JWToken"));
+
+        var username = Context.Session.GetString("Username") ?? "User";
+        var role = Context.Session.GetString("Role") ?? "";
+
+        var firstName = Context.Session.GetString("FirstName") ?? "";
+        var lastName = Context.Session.GetString("LastName") ?? "";
+
+        var initials =
+            (firstName.Length > 0 ? firstName.Substring(0, 1) : "") +
+            (lastName.Length > 0 ? lastName.Substring(0, 1) : "");
+
+        initials = initials.ToUpperInvariant();
+    }
+
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+
+                <a class="navbar-brand"
+                   asp-controller="Home"
+                   asp-action="Index">
+                    RaceDay
+                </a>
+
+                <button class="navbar-toggler"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target=".navbar-collapse"
+                        aria-controls="navbarSupportedContent"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation">
+
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="navbar-collapse collapse">
+
+                    <!-- Main Navigation -->
+                    <ul class="navbar-nav me-auto">
+
+                        <li class="nav-item">
+                            <a class="nav-link text-dark"
+                               asp-controller="Events"
+                               asp-action="Index">
+                                Events
+                            </a>
+                        </li>
+
+                        @if (isLoggedIn)
+                        {
+                            @if (role == "Organiser")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark"
+                                       asp-controller="Organiser"
+                                       asp-action="Dashboard">
+                                        Organiser Dashboard
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark"
+                                       asp-controller="Enrolments"
+                                       asp-action="Index">
+                                        Manage Enrolments
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark"
+                                       asp-controller="Results"
+                                       asp-action="Index">
+                                        Manage Results
+                                    </a>
+                                </li>
+                            }
+
+                            else if (role == "Participant")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark"
+                                       asp-controller="ParticipantDashboard"
+                                       asp-action="Index">
+                                        My Dashboard
+                                    </a>
+                                </li>
+                             
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark"
+                                       asp-controller="Enrolments"
+                                       asp-action="Index">
+                                        My Enrolments
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark"
+                                       asp-controller="Results"
+                                       asp-action="Index">
+                                        My Results
+                                    </a>
+                                </li>
+                            }
+                        }
+
+                        <li class="nav-item">
+                            <a class="nav-link text-dark"
+                               asp-controller="Home"
+                               asp-action="Index">
+                                Home
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link text-dark"
+                               asp-controller="Home"
+                               asp-action="Privacy">
+                                Privacy
+                            </a>
+                        </li>
+
+                    </ul>
+
+                    <!-- Account Navigation -->
+                    <ul class="navbar-nav ms-auto">
+
+                        @if (isLoggedIn)
+                        {
+                            <li class="nav-item dropdown">
+
+                                <button class="btn border-0 bg-transparent d-flex align-items-center dropdown-toggle"
+                                        type="button"
+                                        id="accountDropdown"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+
+                                    <span class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center fw-bold"
+                                          style="width: 40px; height: 40px;">
+                                        @initials
+                                    </span>
+
+                                    <span class="ms-2 text-dark">
+                                        @username.ToUpper()
+                                    </span>
+
+                                </button>
+
+                                <ul class="dropdown-menu dropdown-menu-end"
+                                    aria-labelledby="accountDropdown">
+
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            @username
+                                        </h6>
+                                    </li>
+
+                                    <li>
+                                        <span class="dropdown-item-text text-muted">
+                                            @role
+                                        </span>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Profile"
+                                           asp-action="Index">
+                                            <i class="bi bi-person-circle me-2"></i>
+                                            My Profile
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <hr class="dropdown-divider" />
+                                    </li>
+
+                                    <li>
+                                        <form asp-controller="Account"
+                                              asp-action="Logout"
+                                              method="post">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <button type="submit"
+                                                    class="dropdown-item">
+                                                Logout
+                                            </button>
+
+                                        </form>
+                                    </li>
+
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark"
+                                   asp-controller="Account"
+                                   asp-action="Login">
+                                    Login
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link text-dark"
+                                   asp-controller="Account"
+                                   asp-action="Register">
+                                    Register
+                                </a>
+                            </li>
+                        }
+
+                    </ul>
+
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2026 - RaceDay.MVC -
+            <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

@@ -1,0 +1,110 @@
+﻿@model RaceDay.MVC.Models.CreateEnrolmentViewModel
+
+@{
+    ViewData["Title"] = "Enrol in Event";
+
+    var events = ViewBag.Events as List<RaceDay.MVC.Models.Event>
+        ?? new List<RaceDay.MVC.Models.Event>();
+
+    var categories = ViewBag.Categories as List<RaceDay.MVC.Models.Category>
+        ?? new List<RaceDay.MVC.Models.Category>();
+}
+
+<div class="container mt-4">
+
+    <h2>Enrol in an Event</h2>
+    <p>Select an event and choose your preferred category.</p>
+
+    <div class="row">
+        <div class="col-md-6">
+
+            <form asp-action="Create" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="EventId" class="form-label">
+                        Select Event
+                    </label>
+
+                    <select asp-for="EventId" class="form-select">
+                        <option value="">Choose an event</option>
+
+                        @foreach (var item in events)
+                        {
+                            <option value="@item.EventId">
+                                @item.EventName
+                            </option>
+                        }
+                    </select>
+
+                    <span asp-validation-for="EventId"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CategoryId" class="form-label">
+                        Select Category
+                    </label>
+
+                    <select asp-for="CategoryId" class="form-select">
+                        <option value="">Choose a category</option>
+
+                        @foreach (var item in categories)
+                        {
+                            <option value="@item.CategoryId"
+                                    data-event-id="@item.EventId">
+                                @item.CategoryName
+                            </option>
+                        }
+                    </select>
+
+                    <span asp-validation-for="CategoryId"
+                          class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Submit Enrolment
+                </button>
+
+                <a asp-action="Index" class="btn btn-secondary">
+                    Cancel
+                </a>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const eventSelect = document.getElementById("EventId");
+        const categorySelect = document.getElementById("CategoryId");
+
+        function filterCategories() {
+            const selectedEvent = eventSelect.value;
+
+            categorySelect.value = "";
+
+            Array.from(categorySelect.options).forEach(option => {
+                if (option.value === "") {
+                    option.hidden = false;
+                    return;
+                }
+
+                option.hidden =
+                    option.dataset.eventId !== selectedEvent;
+            });
+
+            categorySelect.disabled = !selectedEvent;
+        }
+
+        eventSelect.addEventListener("change", filterCategories);
+
+        filterCategories();
+    </script>
+}

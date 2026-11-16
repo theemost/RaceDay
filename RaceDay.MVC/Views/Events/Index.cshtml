@@ -1,0 +1,95 @@
+﻿@model List<RaceDay.MVC.Models.Event>
+
+@{
+    ViewData["Title"] = "Events";
+
+    var isOrganiser = Context.Session.GetString("Role") == "Organiser";
+
+    int.TryParse(
+        Context.Session.GetString("UserId"),
+        out int currentUserId);
+}
+
+<h1>Upcoming Events</h1>
+
+@if (Model == null || !Model.Any())
+{
+    <p>No events are currently available.</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+
+                        <h5 class="card-title">@item.EventName</h5>
+                        <hr />
+
+                        <p>
+                            <strong>Date:</strong>
+                            @item.EventDate.ToString("dd MMMM yyyy")
+                        </p>
+
+                        <p>
+                            <strong>Location:</strong> @item.Location
+                        </p>
+
+                        <p>
+                            <strong>Event Type:</strong> @item.EventType
+                        </p>
+
+                        <p>
+                            <strong>Organiser:</strong> @item.Organiser
+                        </p>
+
+                        <a asp-controller="Events"
+                           asp-action="Details"
+                           asp-route-id="@item.EventId"
+                           class="btn btn-primary">
+                            View Details
+                        </a>
+
+                        @if (Context.Session.GetString("Role") == "Participant")
+                        {
+                            <a asp-controller="Enrolments"
+                               asp-action="Create"
+                               asp-route-eventId="@item.EventId"
+                               class="btn btn-success">
+                                Enrol Now
+                            </a>
+                        }
+
+                        @if (isOrganiser && item.OrganiserId == currentUserId)
+                        {
+                            <a asp-controller="Events"
+                               asp-action="Edit"
+                               asp-route-id="@item.EventId"
+                               class="btn btn-warning">
+                                Edit
+                            </a>
+
+                            <form asp-controller="Events"
+                                  asp-action="Delete"
+                                  asp-route-id="@item.EventId"
+                                  method="post"
+                                  style="display:inline;">
+
+                                @Html.AntiForgeryToken()
+
+                                <button type="submit"
+                                        class="btn btn-danger"
+                                        onclick="return confirm('Are you sure you want to delete this event?');">
+                                    Delete
+                                </button>
+                            </form>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

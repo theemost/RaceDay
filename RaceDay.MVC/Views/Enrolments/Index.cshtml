@@ -1,0 +1,103 @@
+﻿@model List<RaceDay.MVC.Models.Enrolment>
+
+@{
+    ViewData["Title"] = "Enrolments";
+    var isOrganiser = Context.Session.GetString("Role") == "Organiser";
+}
+
+<div class="container mt-4">
+
+    <h2>@(isOrganiser ? "Manage Enrolments" : "My Enrolments")</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+    @if (Model == null || !Model.Any())
+    {
+        <p>You do not have any enrolments yet.</p>
+    }
+    else
+    {
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Enrolment ID</th>
+
+                    @if (isOrganiser)
+                    {
+                        <th>Participant</th>
+                    }
+
+                    <th>Event</th>
+                    <th>Category</th>
+                    <th>Status</th>
+
+                    @if (isOrganiser)
+                    {
+                        <th>Actions</th>
+                    }
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.EnrolmentId</td>
+
+                        @if (isOrganiser)
+                        {
+                            <td>@item.ParticipantName</td>
+                        }
+
+                        <td>@item.EventName</td>
+                        <td>@item.CategoryName</td>
+                        <td>
+                            <span class="badge bg-info">
+                                @item.EnrolmentStatus
+                            </span>
+                        </td>
+
+                        @if (isOrganiser)
+                        {
+                            <td>
+                                <a asp-controller="Enrolments"
+                                   asp-action="Edit"
+                                   asp-route-id="@item.EnrolmentId"
+                                   class="btn btn-warning">
+                                    Edit
+                                </a>
+
+                                <form asp-controller="Enrolments"
+                                      asp-action="Delete"
+                                      asp-route-id="@item.EnrolmentId"
+                                      method="post"
+                                      style="display:inline;">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <button type="submit"
+                                            class="btn btn-danger"
+                                            onclick="return confirm('Are you sure you want to delete this enrolment?');">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

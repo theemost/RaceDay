@@ -1,0 +1,200 @@
+﻿@model RaceDay.MVC.Models.ParticipantDashboardViewModel
+
+@{
+    ViewData["Title"] = "Participant Dashboard";
+}
+
+<div class="container mt-4">
+
+    <h1>My Dashboard</h1>
+    <p class="text-muted">
+        Welcome! Here's an overview of your RaceDay activities.
+    </p>
+
+    <div class="row g-3 mt-3 mb-4">
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Events Joined</h6>
+                    <h2>@Model.TotalEvents</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Approved</h6>
+                    <h2 class="text-success">@Model.ApprovedCount</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Pending</h6>
+                    <h2 class="text-warning">@Model.PendingCount</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Rejected</h6>
+                    <h2 class="text-danger">@Model.RejectedCount</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Results Recorded</h6>
+                    <h2>@Model.TotalResults</h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- My Events -->
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header">
+            <h4 class="mb-0">My Events</h4>
+        </div>
+
+        <div class="card-body">
+
+            @if (!Model.Enrolments.Any())
+            {
+                <div class="alert alert-info">
+                    You haven't enrolled in any events yet.
+
+                    <a asp-controller="Events"
+                       asp-action="Index">
+                        Browse available events
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-striped table-bordered">
+
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var enrolment in Model.Enrolments)
+                            {
+                                <tr>
+                                    <td>@enrolment.EventName</td>
+                                    <td>@enrolment.CategoryName</td>
+
+                                    <td>
+                                        @if (enrolment.EnrolmentStatus == "Approved")
+                                        {
+                                            <span class="badge bg-success">Approved</span>
+                                        }
+                                        else if (enrolment.EnrolmentStatus == "Rejected")
+                                        {
+                                            <span class="badge bg-danger">Rejected</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                @enrolment.EnrolmentStatus
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        <a asp-controller="Events"
+                                           asp-action="Details"
+                                           asp-route-id="@enrolment.EventId"
+                                           class="btn btn-primary btn-sm">
+                                            View Event
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+
+        </div>
+    </div>
+
+    <!-- My Results -->
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header">
+            <h4 class="mb-0">My Results</h4>
+        </div>
+
+        <div class="card-body">
+
+            @if (!Model.Results.Any())
+            {
+                <div class="alert alert-info">
+                    No results have been recorded for you yet.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-striped table-bordered">
+
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Category</th>
+                                <th>Finishing Time</th>
+                                <th>Position</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var result in Model.Results)
+                            {
+                                <tr>
+                                    <td>@result.EventName</td>
+                                    <td>@result.CategoryName</td>
+                                    <td>
+                                        @result.FinishTime.ToString(@"hh\:mm\:ss")
+                                    </td>
+                                    <td>@result.Position</td>
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+
+        </div>
+    </div>
+
+    <a asp-controller="Events"
+       asp-action="Index"
+       class="btn btn-primary mb-4">
+        Browse More Events
+    </a>
+
+</div>
